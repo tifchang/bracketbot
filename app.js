@@ -6,19 +6,76 @@ var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var google = require('googleapis');
 var googleAuth = require('google-auth-library');
+const SlackBot = require('slackbots');
 
 // Google OAuth instantiation
-var OAuth2 = google.auth.OAuth2;
-
-// Slack bot requirements
-var { CLIENT_EVENTS, RTM_EVENTS, RtmClient, WebClient } = require('@slack/client');
-// Source the token variables 
-var rtm = new RtmClient(process.env.BOT_TOKEN);
-var web = new WebClient(process.env.BOT_TOKEN);
+// var OAuth2 = google.auth.OAuth2;
 
 // express server setup
 var app = express();
 var port = process.env.PORT || 3000;
+
+// bot
+const bot = new SlackBot({
+    token: process.env.BOT_TOKEN,
+    name: 'LilBB'
+})
+
+// Object that stores mapping of uesrs
+var all_users = {};
+
+bot.on('start', () => {
+    const params = {
+        icon_emoji: ''
+    }
+    // user storage
+    var users = bot.getUsers()._value.members;
+    users.forEach(u => {
+        all_users[u.id] = {
+            name: u.name || '',
+            real_name: u.real_name || '',
+            display_name: u.display_name || '',
+            email: u.profile.email || '',
+        }
+    });
+    // bot.postMessageToChannel(
+    //     'general', 
+    //     ":ok_hand: :gentlyplz: :tt: ~ You are what you yeet ~ :tt: :gentlyplz: :ok_hand:", 
+    //     params);
+})
+
+// Error handler
+bot.on('error', (err) => console.log(err))
+
+// Message handler 
+bot.on('message', (data) => {
+    if (data.type !== 'message') {
+        return;
+    }
+    // Create tournament
+    var msgArray = data.text.split(" ");
+    if (msgArray[1].toLowerCase() === "create") {
+        var bracketName = "";
+        for (i = 2; i < msgArray.indexOf("bracket"); i++) {
+            bracketName += (msgArray[i] + " ");
+        }
+        createTournament(bracketName);
+    }
+    // Add players
+    if (msgArray[1].toLowerCase() === "add") {
+        
+    }
+})
+
+// Message helper functions
+function createTournament(bracketname) {
+    // TODO: insert function to create tournament
+    bot.postMessageToChannel(
+        'general', 
+        'Created the *' + bracketname + '* bracket with ID [TOURNAMENT ID]');
+}
+
+
 
 // TODO: require in google cal functions or anything cal related
 
@@ -37,10 +94,6 @@ app.get('/connect/success', function (req, res) {
 });
 
 // TODO: google authorization endpoint
-
-// TODO: challonge api create bracket
-
-// TODO: challenge api update bracket
 
 
 app.listen(port, function () {
