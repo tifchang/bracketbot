@@ -6,15 +6,38 @@ var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var google = require('googleapis');
 var googleAuth = require('google-auth-library');
+const SlackBot = require('slackbots');
 
+// bot
+const bot = new SlackBot({
+    token: process.env.BOT_TOKEN,
+    name: 'LilBB'
+})
+
+bot.on('start', () => {
+    const params = {
+        icon_emoji: ''
+    }
+    bot.postMessageToChannel(
+        'general', 
+        ":ok_hand: :gentlyplz: :tt: ~ You are what you yeet ~ :tt: :gentlyplz: :ok_hand:", 
+        params);
+})
+
+// Error handler
+bot.on('error', (err) => console.log(err))
+
+// Message handler 
+bot.on('message', (data) => {
+    if (data.type !== 'message') {
+        console.log("data type: " + data.type);
+        return;
+    }
+    console.log(data);
+})
 // Google OAuth instantiation
-var OAuth2 = google.auth.OAuth2;
+// var OAuth2 = google.auth.OAuth2;
 
-// Slack bot requirements
-var { CLIENT_EVENTS, RTM_EVENTS, RtmClient, WebClient } = require('@slack/client');
-// Source the token variables 
-var rtm = new RtmClient(process.env.BOT_TOKEN);
-var web = new WebClient(process.env.BOT_TOKEN);
 
 // express server setup
 var app = express();
