@@ -1,6 +1,5 @@
 const axios = require('axios');
 const dotenv = require('dotenv');
-const queryString = require('query-string');
 
 const endpoints = require('./endpoints');
 
@@ -12,6 +11,8 @@ class BracketBuilder {
 		
     this.createBracket.bind(this);
     this.fetchAllBracketInfo.bind(this);
+    this.deleteBracket.bind(this);
+    this.indexParticipants.bind(this);
 	}
 
 	/**
@@ -23,7 +24,7 @@ class BracketBuilder {
    * @returns {Promise}
 	 */
 	createBracket({ name, startTime, description, cap }) {
-		return axios.post(endpoints.TOURNAMENT, { 
+		return axios.post(this.resolveURL(), { 
 			name,
 			description,
       start_at: startTime,
@@ -43,10 +44,9 @@ class BracketBuilder {
   fetchAllBracketInfo(since=7) {
     const today = new Date();
     today.setDate(today.getDate() - since);
-
-    return axios.get(`${endpoints.TOURNAMENT}`, {
+    console.log(this.resolveURL());
+    return axios.get(this.resolveURL(), {
       params: { state: 'all', api_key: this.API_URL, created_after: today},
-      headers: { 'Content-Type': 'application/json' }
     })
     .then(res => res.data)
     .then(data => data.map(({ tournament }) => {
@@ -54,8 +54,30 @@ class BracketBuilder {
     }))
     .catch(err => err);
   }
+
+  /**
+   * 
+   * @param {string} id of tournament to delete
+   * @returns {int} status code (200 === success)
+   */
+  deleteBracket({ id }) {
+    return axios.delete(this.resolveURL(id), {
+      params: { api_key: this.API_URL }
+    })
+    .then(res => res.status)
+    .catch(err => err);
+  }
+
+  indexParticipants({ id }) {
+
+  }
+
+  resolveURL(param) {
+    return param === "" ? `${endpoints.TOURNAMENT}/${param}.json` : `${endpoints.TOURNAMENT}.json`;
+  }
 }
 
 const bb = new BracketBuilder();
-// bb.createBracket({name: "Ayo I like mayo123443365", startTime: new Date(), description: "ayo", cap: 10}).then(status => console.log(status)).catch(err => console.log(err));
-bb.fetchAllBracketInfo().then(t => console.log(t));
+// bb.deleteBracket({id: "4851658"}).then(status => console.log(status)).catch(err => console.log(err));
+// bb.createBracket({name: "Kiki DO YOU LOVE ME", startTime: new Date(), description: "ayo", cap: 10}).then(status => console.log(status)).catch(err => console.log(err));
+// bb.fetchAllBracketInfo().then(t => console.log(t));
