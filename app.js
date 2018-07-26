@@ -11,6 +11,12 @@ const SlackBot = require('slackbots');
 // Google OAuth instantiation
 // var OAuth2 = google.auth.OAuth2;
 
+const BracketBuilder = require('./bracketBuilder');
+
+const bb = new BracketBuilder();
+bb.addSingleParticipant({tournamentId: "4852317", name:"nora"}).then(res => console.log(res));
+
+
 // express server setup
 var app = express();
 var port = process.env.PORT || 3000;
