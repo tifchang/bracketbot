@@ -31,22 +31,31 @@ class BracketBuilder {
       signup_cap: cap,
 			api_key: this.API_URL
     }, {'Content-Type': 'application/json'})
+      .then(res => res)
+      .catch(err => err);
   }
 
   /**
+   * @param since how far back in time to retrieve tournament info
    * Fetches all brackets made within the last week
-   * @returns {Promise}
+   * @returns {Promise with tournament {id, name, url}} 
    */
   fetchAllBracketInfo(since=7) {
     const today = new Date();
     today.setDate(today.getDate() - since);
 
-    const qs = queryString.stringify({state: 'all', api_key: this.API_URL})
-    console.log(`${endpoints.TOURNAMENT}?${qs}`)
-    return axios.get(`${this.API_URL}?${qs}`, {'Content-Type': 'application/json'}).then(res => res).catch(err => err);
+    return axios.get(`${endpoints.TOURNAMENT}`, {
+      params: { state: 'all', api_key: this.API_URL, created_after: today},
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.data)
+    .then(data => data.map(({ tournament }) => {
+      return {id:tournament.id, name:tournament.name, url:tournament.url}
+    }))
+    .catch(err => err);
   }
 }
 
 const bb = new BracketBuilder();
 // bb.createBracket({name: "Ayo I like mayo123443365", startTime: new Date(), description: "ayo", cap: 10}).then(status => console.log(status)).catch(err => console.log(err));
-bb.fetchAllBracketInfo().then(res => console.log(res));
+bb.fetchAllBracketInfo().then(t => console.log(t));
