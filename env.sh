@@ -1,0 +1,3 @@
+export BOT_TOKEN='nc6V3E4pwx2uHd0DLX8ktx2T';
+export CHALLONGE_KEY='SfEhJrMKG2dmj27FXj1Qj7ZOhw4b0lNkuslSEr1J';
+

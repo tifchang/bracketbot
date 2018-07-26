@@ -7,10 +7,6 @@ var mongoose = require('mongoose');
 var google = require('googleapis');
 var googleAuth = require('google-auth-library');
 
-// This path needs to change based off our file structure
-var Models = require('./models/models');
-var Game = Models.Game;
-
 // Google OAuth instantiation
 var OAuth2 = google.auth.OAuth2;
 
@@ -41,6 +37,10 @@ app.get('/connect/success', function (req, res) {
 });
 
 // TODO: google authorization endpoint
+
+// TODO: challonge api create bracket
+
+// TODO: challenge api update bracket
 
 
 app.listen(port, function () {
