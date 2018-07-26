@@ -5,12 +5,9 @@
   "main": "app.js",
   "dependencies": {
     "axios": "^0.18.0",
-<<<<<<< HEAD
     "crypto-js": "^3.1.9-1",
     "cryptojs": "^2.5.3",
-=======
     "dotenv": "^6.0.0",
->>>>>>> ef3d0eccc4d8f49187f190898132eb877219998d
     "express": "^4.16.3",
     "google-auth-library": "^1.6.1",
     "googleapis": "^32.0.0",
