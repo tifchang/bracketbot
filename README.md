@@ -1,3 +1,3 @@
 # Lil BB - XXlilBracketBot
 
-![brian](https://imgur.com/a/qYD6eFj "Hello, is it LilBB you are looking for?")
+![brian](https://github.com/tifchang/bbbot/blob/master/bin/brian.png "Hello, is it LilBB you are looking for?")
