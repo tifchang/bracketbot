@@ -7,11 +7,11 @@
 
  // receives data from slack bot
 const botPipeline = (email) => {
-    
+    throw DOMException("Not Implemented");
 }
 
 // helper function that writes this file to the database
-const writeToDbFile = (email) => {
+const writeToDbFile = (email, token) => {
     throw DOMException("Not Implemented");
 }
 
