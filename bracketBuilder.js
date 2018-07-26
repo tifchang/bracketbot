@@ -95,3 +95,5 @@ const bb = new BracketBuilder();
 // bb.createBracket({name: "Kiki DO YOU LOVE ME", startTime: new Date(), description: "ayo", cap: 10}).then(status => console.log(status)).catch(err => console.log(err));
 // bb.fetchAllBracketInfo().then(t => console.log(t));
 bb.indexParticipants({id: "4852317"});
+
+module.exports = BracketBuilder
