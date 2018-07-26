@@ -5,6 +5,13 @@
  * having to sign up regularly
  */
 
+var fs = require('fs');
+var process = require('child_process');
+var CryptoJS = require("crypto-js");
+var lineReader = require('readline').createInterface({
+    input: require('fs').createReadStream('file.in')
+  });
+
  // receives data from slack bot
 const botPipeline = (email) => {
     throw DOMException("Not Implemented");
@@ -12,12 +19,33 @@ const botPipeline = (email) => {
 
 // helper function that writes this file to the database
 const writeToDbFile = (email, token) => {
-    throw DOMException("Not Implemented");
+    fs.appendFile("./db.txt", email + "\t|\t"
+        + encryptToken(token) + "\n", (err) => {
+        if (err) {
+            console.log("Error writing to file: " + err);
+        }
+    });
+}
+
+const encryptToken = (token) => {
+    // todo encrypt token
+    return CryptoJS.AES.encrypt(token, "shipit").toString();
+}
+
+const decryptToken = (token) => {
+    return CryptoJS.AES.decrypt(token.toString(), "shipit")
+                                        .toString(CryptoJS.enc.Utf8);
 }
 
 // See if this email exists within the file
 const checkDbFile = (email) => {
-    throw DOMException("Not Implemented");
+    lineReader.on('line', function (line) {
+        let data = line.split("|");
+        if (email === data[0].trim()) {
+            return true;
+        }
+      });
+      return false;
 }
 
 // unverified data that needs to go through oAuth
