@@ -65,4 +65,3 @@ typings/
 .idea
 *.swp
 .DS_Store
-env.sh
