@@ -68,12 +68,25 @@ class BracketBuilder {
     .catch(err => err);
   }
 
+  /**
+   * 
+   * @param {string} id tournament id
+   */
   indexParticipants({ id }) {
-
+    console.log(this.resolveURL(id));
+    return axios.get(this.resolveURL(id), {
+      params: { api_key: this.API_URL, include_participants: 1 }
+    })
+    .then(res => res.data)
+    .then(data => data.tournament)
+    .then(({ participants }) => participants.map(({ participant }) => {
+      return {id: participant.id, name: participant.name}
+    }))
+    .catch(err => err);
   }
 
-  resolveURL(param) {
-    return param === "" ? `${endpoints.TOURNAMENT}/${param}.json` : `${endpoints.TOURNAMENT}.json`;
+  resolveURL(param="") {
+    return param === "" ? `${endpoints.TOURNAMENT}.json` : `${endpoints.TOURNAMENT}/${param}.json`
   }
 }
 
@@ -81,3 +94,4 @@ const bb = new BracketBuilder();
 // bb.deleteBracket({id: "4851658"}).then(status => console.log(status)).catch(err => console.log(err));
 // bb.createBracket({name: "Kiki DO YOU LOVE ME", startTime: new Date(), description: "ayo", cap: 10}).then(status => console.log(status)).catch(err => console.log(err));
 // bb.fetchAllBracketInfo().then(t => console.log(t));
+bb.indexParticipants({id: "4852317"});
