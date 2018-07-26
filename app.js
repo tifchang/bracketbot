@@ -54,26 +54,25 @@ bot.on('message', (data) => {
     }
     // Create tournament
     var msgArray = data.text.split(" ");
-    if (msgArray[1] === "create") {
+    if (msgArray[1].toLowerCase() === "create") {
         var bracketName = "";
         for (i = 2; i < msgArray.indexOf("bracket"); i++) {
             bracketName += (msgArray[i] + " ");
         }
-        console.log(bracketName.trim());
-        // createTournament();
+        createTournament(bracketName);
     }
     // Add players
-    if (msgArray[1] === "add") {
-
+    if (msgArray[1].toLowerCase() === "add") {
+        
     }
 })
 
 // Message helper functions
-function createTournament() {
+function createTournament(bracketname) {
     // TODO: insert function to create tournament
     bot.postMessageToChannel(
         'general', 
-        "Created tournament [TOURNAMENT NAME] [TOURNAMENT ID]");
+        'Created the *' + bracketname + '* bracket with ID [TOURNAMENT ID]');
 }
 
 
