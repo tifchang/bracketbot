@@ -7,7 +7,7 @@
 
  // receives data from slack bot
 const botPipeline = (email) => {
-    throw DOMException("Not Implemented");
+    
 }
 
 // helper function that writes this file to the database
@@ -21,12 +21,12 @@ const checkDbFile = (email) => {
 }
 
 // unverified data that needs to go through oAuth
-const sendDataUnverified = (email) => {
+const sendDataUnverifiedForward = (email) => {
     throw DOMException("Not Implemented");
 }
 
 // send any verified data to the calendar service 
-const sendDataVerified = (email) => {
+const sendDataVerifiedForward = (email) => {
     throw DOMException("Not Implemented");
 }
 
@@ -38,6 +38,10 @@ const receiveUnverifiedData = (data) => {
 
 // send data back to bot to verify scheduling
 const recieveVerifiedData = (data) => {
+    throw DOMException("Not Implemented");
+}
+
+const sendSchedulingDataBack = (data) => {
     throw DOMException("Not Implemented");
 }
 
