@@ -90,11 +90,7 @@ function lookForTimes(user1, user2, startDate) {
 //params: the two participants' calendars and the list of freeBlock objects which contain the start and end times as dates
 //on success: returns the start datetime of the block that is free and at least 15 minutes long
 //on failure: that means there is no free block that's long enough, so it calls lookForTimes with tomorrow as the next start date 
-<<<<<<< HEAD
-function findAppointment(user1, user2, freeBlocks, startDate) {
-=======
 function findAppointment(user1, user2, freeBlocks1, freeBlocks2, startDate){
->>>>>>> d8600060c48b66411e4eb505290fe0728b5773ee
     //REWRITE
     
     
@@ -113,7 +109,7 @@ function findAppointment(user1, user2, freeBlocks1, freeBlocks2, startDate){
     //if there isn't a suitable block, look for openings starting tomorrow morning, then try to find a suitable block within those. 
     var newStart = new Date(); 
     newStart.setDate(startDate.getDate() + 1);
-    newStart.setHours(8, 0, 0, 0); 
+    newStart.setHours(8, 0, 0, 0);
     newPotential = lookForTimes(user1, user2, newStart); 
     return(findAppointment(user1, user2, newPotential[0], newPotential[1])); 
 }
@@ -160,9 +156,19 @@ const scheduleHelper = (freeBlocks1, freeBlocks2) => {
         start2, end2 = p2[0], p2[1]
         if (noOverLapCheck(start1, end1, start2, end2)) {
             return scheduleHelper(freeBlocks1.splice(1), freeBlocks2.splice(2));
-        } 
-        // case where user1 has later end time than user2's start
-
+        } else {
+            const timeDiff1 = end1 - start2;
+            const timeDiff2 = end2 - start1;
+            if ((timeDiff2) >= 15) {
+                return start1, start1 + 15;
+            } else if ((timeDiff1) >= 15) {
+                return start2, start2 + 15;
+            } else if ((timeDiff2) == 0 || timeDiff2 < 15) {
+                return scheduleHelper(freeBlocks1, freeBlocks2.splice(1));
+            } else if ((timeDiff1) == 0 || timeDiff1 < 15) {
+                return scheduleHelper(freeBlocks1.splice(1), freeBlocks2);
+            }
+        }
     }
 }
 
@@ -170,7 +176,6 @@ const noOverLapCheck =  (s1, e1, s2, e2) => {
     return (e1 > s1 && e1 < e2) || (e2 > s1 && e2 < e1)
 }
 
-const advanceBoth =
 const stuff = {
     "kind": "calendar#freeBusy",
     "timeMin": "2018-07-27T16:00:00.000Z",
