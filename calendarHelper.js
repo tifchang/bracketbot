@@ -12,9 +12,10 @@ function appointmentHelper(user1, user2){
     }
     //in case you have to go to a new date, lookForTimes returns the day the potential openings are on as well
     potential = lookForTimes(user1, user2, startDate);                          
-    var freeBlocks = potential[0];
-    startDate = potential[1];                               
-    var targetDate = findAppointment(user1, user2, freeBlocks, startDate); 
+    var freeBlocks1 = potential[0];
+    var freeBlocks2 = potential[1];
+    startDate = potential[2];                               
+    var targetDate = findAppointment(user1, user2, freeBlocks1, freeBlocks2, startDate); 
     return makeAppointment(user1, user2, targetDate); 
 }
 
@@ -51,27 +52,37 @@ function lookForTimes(user1, user2, startDate) {
             //potential for infinite recursion lol
         }
         var blocks = response.items;
-        const pairs = []
+        let pairs = [];
         const names = Object.keys(blocks.calendars);
         names.forEach(name => {
+            let arr = []
             blocks.calendars[name].busy.forEach(({start, end}) => {
-                pairs.push(start);
-                pairs.push(end);
+                arr.push(start)
+                arr.push(end);
             })
+            pairs.push(arr)
         });
 
         //need to add case handling in case there is only 0 or 1 entries in pairs
-        var freeBlocks = [];
-        freeBlocks.push([startDate, pairs[0]]);
+        var freeBlocks1 = [];
+        freeBlocks1.push([startDate, pairs[0][0]]);
         
-        for(var i = 1; i < pairs.length - 1; i+=2){
-            freeBlocks.push([pairs[i], pairs[i+1]]);
+        for(var i = 1; i < pairs[0].length - 1; i+=2){
+            freeBlocks1.push([pairs[0][i], pairs[0][i+1]]);
         }
         var endOfDay = new Date();
         endOfDay.setHours(17, 30, 0, 0);  
-        freeBlocks.push([pairs[pairs.length], endOfDay]); 
+        freeBlocks1.push([pairs[0][pairs[0].length], endOfDay]); 
 
-        return [freeBlocks, startDate];  
+        var freeBlocks2 = [];
+        freeBlocks2.push([startDate, pairs[1][0]]);
+        
+        for(var i = 1; i < pairs[1].length - 1; i+=2){
+            freeBlocks2.push([pairs[1][i], pairs[1][i+1]]);
+        }  
+        freeBlocks2.push([pairs[1][pairs[1].length], endOfDay]); 
+
+        return [freeBlocks1, freeBlocks2, startDate];  
     });
 }
 
@@ -79,9 +90,17 @@ function lookForTimes(user1, user2, startDate) {
 //params: the two participants' calendars and the list of freeBlock objects which contain the start and end times as dates
 //on success: returns the start datetime of the block that is free and at least 15 minutes long
 //on failure: that means there is no free block that's long enough, so it calls lookForTimes with tomorrow as the next start date 
+<<<<<<< HEAD
 function findAppointment(user1, user2, freeBlocks, startDate) {
+=======
+function findAppointment(user1, user2, freeBlocks1, freeBlocks2, startDate){
+>>>>>>> d8600060c48b66411e4eb505290fe0728b5773ee
     //REWRITE
     
+    
+    
+    
+    //-------------------------------------------
     freeBlocks.foreach((block) => {
         var start = new Date(block.startTime);
         var end = new Date(block.endTime); 
@@ -132,39 +151,59 @@ function makeAppointment(user1, user2, targetDate){
       });
 }
 
-// const stuff = {
-//     "kind": "calendar#freeBusy",
-//     "timeMin": "2018-07-27T16:00:00.000Z",
-//     "timeMax": "2018-07-28T01:30:00.000Z",
-//     "calendars": {
-//      "nmcginley@atlassian.com": {
-//       "busy": [
-//        {
-//         "start": "2018-07-27T10:00:00-07:00",
-//         "end": "2018-07-27T11:00:00-07:00"
-//        },
-//        {
-//         "start": "2018-07-27T12:30:00-07:00",
-//         "end": "2018-07-27T16:50:00-07:00"
-//        }
-//       ]
-//      },
-//      "cibarra@atlassian.com": {
-//       "busy": [
-//        {
-//         "start": "2018-07-27T10:00:00-07:00",
-//         "end": "2018-07-27T11:00:00-07:00"
-//        },
-//        {
-//         "start": "2018-07-27T11:15:00-07:00",
-//         "end": "2018-07-27T11:20:00-07:00"
-//        },
-//        {
-//         "start": "2018-07-27T12:30:00-07:00",
-//         "end": "2018-07-27T16:50:00-07:00"
-//        }
-//       ]
-//      }
-//     }
-//    }
+const scheduleHelper = (freeBlocks1, freeBlocks2) => {
+    if (user1 == false || user2 == false) {
+        return false;
+    } else {
+        p1, p2 = freeBlocks1[0], freeBlocks2[0]
+        start1, end1 = p1[0], p1[1]
+        start2, end2 = p2[0], p2[1]
+        if (noOverLapCheck(start1, end1, start2, end2)) {
+            return scheduleHelper(freeBlocks1.splice(1), freeBlocks2.splice(2));
+        } 
+        // case where user1 has later end time than user2's start
+
+    }
+}
+
+const noOverLapCheck =  (s1, e1, s2, e2) => {
+    return (e1 > s1 && e1 < e2) || (e2 > s1 && e2 < e1)
+}
+
+const advanceBoth =
+const stuff = {
+    "kind": "calendar#freeBusy",
+    "timeMin": "2018-07-27T16:00:00.000Z",
+    "timeMax": "2018-07-28T01:30:00.000Z",
+    "calendars": {
+     "nmcginley@atlassian.com": {
+      "busy": [
+       {
+        "start": "2018-07-27T10:00:00-07:00",
+        "end": "2018-07-27T11:00:00-07:00"
+       },
+       {
+        "start": "2018-07-27T12:30:00-07:00",
+        "end": "2018-07-27T16:50:00-07:00"
+       }
+      ]
+     },
+     "cibarra@atlassian.com": {
+      "busy": [
+       {
+        "start": "2018-07-27T10:00:00-07:00",
+        "end": "2018-07-27T11:00:00-07:00"
+       },
+       {
+        "start": "2018-07-27T11:15:00-07:00",
+        "end": "2018-07-27T11:20:00-07:00"
+       },
+       {
+        "start": "2018-07-27T12:30:00-07:00",
+        "end": "2018-07-27T16:50:00-07:00"
+       }
+      ]
+     }
+    }
+   }
 
