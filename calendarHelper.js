@@ -141,10 +141,10 @@ function makeAppointment(user1, user2, targetDate, summary ){
     .then(res =>   {
         console.log(res)
         var r = res.items;
-        return "Your game was scheduled for "+targetDate+". Check it out: "+r.htmlLink; 
+        return r.htmlLink; 
     })
     .catch(err => {
-        return "Something went wrong :( Please try again!"
+        return ""
     });
     
 }
