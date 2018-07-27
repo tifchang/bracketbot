@@ -16,6 +16,6 @@ module.exports = {
         return `https://api.challonge.com/v1/tournaments/${tournamentId}/matches.json`
     },
     START: ({tournamentId}) => {
-        return `https://api.challonge.com/v1/tournaments/${tournamentId}/start.json`
+        return `https://api.challonge.com/v1/tournaments/${tournamentId}/start.json` 
     }
 }
