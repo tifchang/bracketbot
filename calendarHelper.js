@@ -28,8 +28,8 @@ function lookForTimes(user1, user2, startDate) {
     endDate.setHours(17, 30, 0, 0); 
 
     var resource = {
-        'timeMin': startDate.toISOString,
-        'timeMax': endDate.toISOString,
+        'timeMin': startDate.toISOString.concat("-08:00"),
+        'timeMax': endDate.toISOString.concat("-08:00"),
         'groupExpansionMax': 2,
         'calendarExpansionMax': 2,
         'items': [
@@ -51,9 +51,27 @@ function lookForTimes(user1, user2, startDate) {
             //potential for infinite recursion lol
         }
         var blocks = response.items;
-        var freeBlocks = blocks.map(({timeMin, timeMax}) =>  {timeMin, timeMax}); 
+        const pairs = []
+        const names = Object.keys(blocks.calendars);
+        names.forEach(name => {
+            blocks.calendars[name].busy.forEach(({start, end}) => {
+                pairs.push(start);
+                pairs.push(end);
+            })
+        });
+
+        //need to add case handling in case there is only 0 or 1 entries in pairs
+        var freeBlocks = [];
+        freeBlocks.push([startDate, pairs[0]]);
+        
+        for(var i = 1; i < pairs.length - 1; i+=2){
+            freeBlocks.push([pairs[i], pairs[i+1]]);
+        }
+        var endOfDay = new Date();
+        endOfDay.setHours(17, 30, 0, 0);  
+        freeBlocks.push([pairs[pairs.length], endOfDay]); 
+
         return [freeBlocks, startDate];  
-        //CONCERN: if there is no opening, does gcal return an err or an empty response? if it's empty we have to do with that 
     });
 }
 
@@ -62,6 +80,8 @@ function lookForTimes(user1, user2, startDate) {
 //on success: returns the start datetime of the block that is free and at least 15 minutes long
 //on failure: that means there is no free block that's long enough, so it calls lookForTimes with tomorrow as the next start date 
 function findAppointment(user1, user2, freeBlocks, startDate){
+    //REWRITE
+    
     freeBlocks.foreach((block) => {
         var start = new Date(block.startTime);
         var end = new Date(block.endTime); 
@@ -92,10 +112,10 @@ function makeAppointment(user1, user2, targetDate){
 
     var event = {
         'start': {
-          'dateTime': targetDate.toISOString()
+          'dateTime': targetDate.toISOString().concat("-08:00")
         },
         'end': {
-          'dateTime': endDate.toISOString()
+          'dateTime': endDate.toISOString().concat("-08:00")
         },
         'attendees': userArr
     };
@@ -111,3 +131,40 @@ function makeAppointment(user1, user2, targetDate){
         return "Your game was scheduled for "+targetDate+". Check it out: "+res.htmlLink; 
       });
 }
+
+// const stuff = {
+//     "kind": "calendar#freeBusy",
+//     "timeMin": "2018-07-27T16:00:00.000Z",
+//     "timeMax": "2018-07-28T01:30:00.000Z",
+//     "calendars": {
+//      "nmcginley@atlassian.com": {
+//       "busy": [
+//        {
+//         "start": "2018-07-27T10:00:00-07:00",
+//         "end": "2018-07-27T11:00:00-07:00"
+//        },
+//        {
+//         "start": "2018-07-27T12:30:00-07:00",
+//         "end": "2018-07-27T16:50:00-07:00"
+//        }
+//       ]
+//      },
+//      "cibarra@atlassian.com": {
+//       "busy": [
+//        {
+//         "start": "2018-07-27T10:00:00-07:00",
+//         "end": "2018-07-27T11:00:00-07:00"
+//        },
+//        {
+//         "start": "2018-07-27T11:15:00-07:00",
+//         "end": "2018-07-27T11:20:00-07:00"
+//        },
+//        {
+//         "start": "2018-07-27T12:30:00-07:00",
+//         "end": "2018-07-27T16:50:00-07:00"
+//        }
+//       ]
+//      }
+//     }
+//    }
+
