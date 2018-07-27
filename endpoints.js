@@ -12,7 +12,10 @@ module.exports = {
     UPDATEMATCH: ({tournamentId, matchId}) => {
         return `https://api.challonge.com/v1/tournaments/${tournamentId}/matches/${matchId}.json`
     },
-    GETMATCHS: ({tournamentId}) => {
+    GETMATCH: ({tournamentId}) => {
         return `https://api.challonge.com/v1/tournaments/${tournamentId}/matches.json`
+    },
+    START: ({tournamentId}) => {
+        return `https://api.challonge.com/v1/tournaments/${tournamentId}/start.json`
     }
 }
