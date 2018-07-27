@@ -26,7 +26,7 @@ class BracketBuilder {
    * @param {int} cap player cap
    * @returns {Promise}
 	 */
-	createBracket({ name, startTime, description, cap }) {
+	createBracket({ name, cap }) {
 		return axios.post(this.resolveURL(), { 
 			name,
 			description,

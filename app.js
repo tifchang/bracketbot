@@ -12,10 +12,7 @@ var BracketBuilder = require('./bracketBuilder');
 // Google OAuth instantiation
 // var OAuth2 = google.auth.OAuth2;
 
-const BracketBuilder = require('./bracketBuilder');
-
 const bb = new BracketBuilder();
-bb.addSingleParticipant({tournamentId: "4852317", name:"nora"}).then(res => console.log(res));
 
 
 // express server setup
@@ -27,8 +24,6 @@ const bot = new SlackBot({
     token: process.env.BOT_TOKEN,
     name: 'Lil BB'
 })
-
-const bb = new BracketBuilder();
 
 // Object that stores mapping of uesrs
 var all_users = {};
@@ -87,9 +82,9 @@ bot.on('message', (data) => {
     else if (msgArray[1].toLowerCase() === "list") {
         var bracketId = msgArray[2];
         bb.fetchAllBracketInfo().then(g => {
-            var tournamentsString;
+            var tournamentsString = "";
             g.forEach(t => {
-                tournamentsString += ":trophy: :eyes: *" + t.name + "(" + t.id + "): see bracket here" + t.url
+                tournamentsString += (":trophy: *" + t.name + " (ID: " + t.id + "):* see bracket here :eyes: " + t.url + "\n")
             })
             bot.postMessageToChannel(
                 'general', 
@@ -167,6 +162,9 @@ function oAuthNotification(name, oAuthURL) {
 // Message helper functions
 function createTournament(bracketName) {
     // TODO: insert function to create tournament
+    bb.createBracket({ bracketName, cap }).then(res => {
+        console.log(res);
+    })
     bot.postMessageToChannel(
         'general', 
         ":trophy: :sparkles: Created the *" + bracketName + "* bracket with ID [Bracket ID]." + 
@@ -174,13 +172,16 @@ function createTournament(bracketName) {
         "this bracket, please write _@Lil BB add @youORfriend to [Bracket ID]_ :heavy_exclamation_mark:");
 }
 
-function addSingleUser(id, name, bracketId) {
+function addSingleUser(id, name, tournamentId) {
     // TODO: insert function to add user 
-    var bracketName = "peanut butter sauce";
-    bot.postMessageToChannel(
-        'general',
-        ":heavy_plus_sign: :gentlyplz: <@" + id + "> has been successfully added to " + bracketId + " bracket."
-    );
+    bb.addSingleParticipant({ tournamentId, name }).then(res => {
+        console.log(res);
+        bot.postMessageToChannel(
+            'general',
+            ":heavy_plus_sign: :gentlyplz: <@" + id + "> has been successfully added to " + tournamentId + " bracket."
+        );
+    })
+
 }
 
 function updateTournament(bracketId, matchId, winner) {
