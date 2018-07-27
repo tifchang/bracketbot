@@ -142,8 +142,8 @@ const scheduleHelper = (freeBlocks1, freeBlocks2) => {
         if (noOverLapCheck(start1, end1, start2, end2)) {
             return scheduleHelper(freeBlocks1.splice(1), freeBlocks2.splice(2));
         } else {
-            const timeDiff1 = end1 - start2;
-            const timeDiff2 = end2 - start1;
+            const timeDiff1 = milliSecondConvertMinutes(end1) - milliSecondConvertMinutes(start2);
+            const timeDiff2 = milliSecondConvertMinutes(end2) - milliSecondConvertMinutes(start1);
             if ((timeDiff2) >= 15) {
                 return start1, start1 + 15;
             } else if ((timeDiff1) >= 15) {
@@ -157,8 +157,17 @@ const scheduleHelper = (freeBlocks1, freeBlocks2) => {
     }
 }
 
+const convertTimeToMinutes
+
 const noOverLapCheck =  (s1, e1, s2, e2) => {
     return (e1 > s1 && e1 < e2) || (e2 > s1 && e2 < e1)
+}
+
+const milliSecondConvertMinutes = (time) => {
+    let timeObj = Date(time);
+    let millis = timeObj.valueOf();
+    const NUM_MILLIS_IN_MINUTE = 60000
+    return millis / NUM_MILLIS_IN_MINUTE;
 }
 
 // const stuff = {
@@ -196,5 +205,8 @@ const noOverLapCheck =  (s1, e1, s2, e2) => {
 //      }
 //     }
 //    }
+<<<<<<< HEAD
 
 module.exports = makeAppointment;
+=======
+>>>>>>> 81d20516021a83b0e24598148701e1d3aac6a037
