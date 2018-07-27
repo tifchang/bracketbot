@@ -8,7 +8,7 @@ var google = require('googleapis');
 var googleAuth = require('google-auth-library');
 const SlackBot = require('slackbots');
 var BracketBuilder = require('./bracketBuilder');
-var makeAppointment = require('./calendarHelper');
+var appointmentHelper = require('./calendarHelper');
 
 // Google OAuth instantiation
 // var OAuth2 = google.auth.OAuth2;
@@ -92,7 +92,7 @@ bot.on('message', (data) => {
         var name = "HARD CODED EVENT NAME"
         startdate.setDate(startdate.getDate() + 1);
         console.log(all_users[u1id].email, all_users[u2id].email, startdate)
-        makeAppointment(all_users[u1id].email, all_users[u2id].email, startdate, name);
+        appointmentHelper(all_users[u1id].email, all_users[u2id].email, name);
     }
 
     // List brackets
