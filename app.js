@@ -99,7 +99,7 @@ bot.on('message', (data) => {
     else if (msgArray[1].toLowerCase() === "update") {
         var bracketId = msgArray[2];
         var matchId = msgArray[4];
-        var winner = msgArray[7];
+        var winner = msgArray[7].substring(2, msgArray[7].indexOf(">"));
         updateTournament(bracketId, matchId, winner);
     }
 
@@ -107,6 +107,7 @@ bot.on('message', (data) => {
     else if (msgArray[1].toLowerCase() === "players") {
         var bracketId = msgArray[2];
         bb.indexParticipants({id: bracketId}).then( players => {
+            console.log(players);
             var playerString = "";
             for (i = 0; i < players.length; i++) {
                 if (i !== players.length - 1) {
@@ -116,10 +117,14 @@ bot.on('message', (data) => {
                 }
             }
             console.log("HELLO: ", playerString);
-            bot.postMessageToChannel(
-                'general',
-                ":busts_in_silhouette: Players in *" + "* are: " + playerString
-            )
+            bb.fetchBracketInfo({ id:bracketId }).then(data => {
+                console.log(data)
+                bot.postMessageToChannel(
+                    'general',
+                    ":busts_in_silhouette: Players in *" + data.name + "* are: " + playerString
+                )
+            })
+            
         });
     }
 
@@ -161,11 +166,16 @@ function oAuthNotification(name, oAuthURL) {
 
 
 // Message helper functions
+<<<<<<< HEAD
 function createTournament(name, cap) {
+    bb.createBracket({ name, cap }).then(res => {
+=======
+function createTournament(name, cap, username) {
     // TODO: insert function to create tournament
     console.log("BB: " + name + "  " + cap);
-    bb.createBracket({ name, cap }).then(res => {
+    const id = bb.createBracket({ name, cap }).then(res => {
         console.log("BRACKET STATUS: " + res)
+>>>>>>> cb8f9248f478795cad5622285030c7b6ecbed943
         if (res.status == 200) {
             bot.postMessageToChannel(
                 'general', 
@@ -180,26 +190,54 @@ function createTournament(name, cap) {
             )
         }
     })
+
+    bb.addSingleParticipant({tournamentId:id, name: username})
+        .then(status => {
+            if(status === 200)
+                bot.postMessage('general', ":heavy_plus_sign: :gentlyplz: <@" + username + "> has been successfully added to " + id + " bracket.")
+        })
+        .catch(_ => {
+            bot.postMessage('general', 'Oops! Something went wrong here. Try again!');
+        })
     
+}
+// Congratulatory end of tournament message
+function endTournament(id) {
+    // TODO: function to get winner 
+    bot.postMessageToChannel(
+        'general',
+        ":trophy: :first_place_medal: Congratulations to " + winner + " on DEFEATING _EVERYONE_ in " + bracketName + " :first_place_medal: :trophy:"
+    )
 }
 
 function addSingleUser(id, name, tournamentId) {
-    // TODO: insert function to add user 
     bb.addSingleParticipant({ tournamentId, name }).then(res => {
-        console.log(res);
-        bot.postMessageToChannel(
-            'general',
-            ":heavy_plus_sign: :gentlyplz: <@" + id + "> has been successfully added to " + tournamentId + " bracket."
-        );
+        console.log("YOYOYOYOYYOOYOYOYO:", res);
+        if (res === 200) {
+            bot.postMessageToChannel(
+                'general',
+                ":heavy_plus_sign: :gentlyplz: <@" + id + "> has been successfully added to " + tournamentId + " bracket."
+            );
+        } else {
+            bot.postMessageToChannel(
+                'general',
+                "Oops! Something went wrong here. The person might already be in the bracket. Try again!"
+            );
+        }
+        
     })
 
 }
 
-function updateTournament(bracketId, matchId, winner) {
-    bot.postMessageToChannel(
-        'general',
-        ":aw_yeah: :banana_dance: Congratulations on the win " + winner + "! :banana_dance: :aw_yeah: Stay tuned for the next contender."
-    )
+function updateTournament(tournamentId, matchId, winnerId) {
+    bb.updateMatch({ matchId, tournamentId, winnerId }).then(res => {
+        console.log("UPDATE: " + res);
+        bot.postMessageToChannel(
+            'general',
+            ":aw_yeah: :banana_dance: Congratulations on the win <@" + winnerId + ">! :banana_dance: :aw_yeah: Stay tuned for the next contender."
+        )
+    })
+    
 }
 
 
