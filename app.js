@@ -3,6 +3,7 @@
 
 var express = require('express');
 var bodyParser = require('body-parser');
+var Sequalize = require('sequelize');
 var mongoose = require('mongoose');
 var google = require('googleapis');
 var googleAuth = require('google-auth-library');
@@ -15,6 +16,30 @@ var appointmentHelper = require('./calendarHelper');
 
 const bb = new BracketBuilder();
 
+const db = new Sequalize({
+    dialect: 'sqlite',
+    storage: './services/test.sqlite'
+})
+
+const User = db.define('user', {
+    name: Sequalize.STRING,
+    real_name: Sequalize.STRING,
+    display_name: Sequalize.STRING,
+    email: Sequalize.STRING,
+    pid: Sequalize.STRING,
+    slack_id: Sequalize.STRING
+})
+
+db.sync().then(() => {
+    User.create({
+        name: "Cesar Francisco Ibarra",
+        real_name: "Wtf this is my real name",
+        display_name: "Cesar Weezer",
+        email: "cesar@stanfurd.edu",
+        pid: "696969",
+        slack_id: "1234"
+    })
+})
 
 // express server setup
 var app = express();
@@ -79,7 +104,7 @@ bot.on('message', (data) => {
     // Add players
     else if (msgArray[1].toLowerCase() === "add") {
         var slackId = msgArray[2].substring(2, msgArray[2].indexOf(">"));
-        var name = all_users[slackId].real_name;
+        var name = "test" // get some sort of name here
         var bracketId = msgArray[4];
         addSingleUser(slackId, name, bracketId);
     }
@@ -116,8 +141,12 @@ bot.on('message', (data) => {
         console.log(msgArray);
         var bracketId = msgArray[2];
         var slackId = msgArray[5].substring(2, msgArray[5].indexOf(">"));
-        var winner = all_users[slackId].pid;
-        updateTournament(bracketId, winner);
+        // var winner = all_users[slackId].pid;
+        User.findOne({where: {slack_id: slackId}})
+            .then(user => {
+                updateTournament(bracketId, user.pid);
+            })
+            .catch(err => console.log(err));
     }
 
     // List participants in tournament
@@ -198,6 +227,7 @@ function createTournament(name, cap, slackId) {
                 "Oops! Something went wrong here. Try again!"
             )
         }
+        // Name here needs to be display name or something
         addSingleUser(slackId, name, res);
     })
 }
@@ -212,10 +242,8 @@ function endTournament(id) {
 }
 // Add single user (also used in the create stage)
 function addSingleUser(slackId, name, tournamentId) {
-    bb.addSingleParticipant({ tournamentId, name: all_users[slackId].real_name })
+    bb.addSingleParticipant({ tournamentId, name })
         .then( ({ id }) => {
-            all_users[slackId].pid = id;
-            console.log("added user: ", all_users)
             bb.fetchBracketInfo({id: tournamentId}).then(resp => {
                 if (resp.cap <= resp.count) {
                     bot.postMessage('general', ":heavy_plus_sign: :gentlyplz: <@" + slackId + "> has been successfully added to " + tournamentId + " bracket. The cap has been reached and the games will now begin!");
@@ -223,22 +251,21 @@ function addSingleUser(slackId, name, tournamentId) {
                 } else {
                     bot.postMessage('general', ":heavy_plus_sign: :gentlyplz: <@" + slackId + "> has been successfully added to " + tournamentId + " bracket.");
                 }
-            
-                
             })
-            
+            User.create({name, real_name: name, display_name: name, email: "", pid: id, slack_id: slackId})
+                .then(res => console.log(res))
+                .catch(err => console.log(err));
         })
         .catch(_ => {
             bot.postMessage('general', 'Oops! Something went wrong here. Try again!');
-        })       
+        })
 }
+
 // Updating match when user inputs score and winner
 function updateTournament(tournamentId, winnerId) {
-    var winnerId = "79026088";
     bb.getMatch({tournamentId, winnerId})
         .then(matches => {
             let match;
-            console.log("match1: ", match);
             matches.forEach(m => {
                 if (winnerId === `${m.player1}` || winnerId === `${m.player2}`) {
                     console.log("I FOUND A MATCH.", m)
