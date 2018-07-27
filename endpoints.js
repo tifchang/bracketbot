@@ -6,5 +6,8 @@ module.exports = {
         }
 
         return `https://api.challonge.com/v1/tournaments/${tournamentId}/participants/${participantId}.json`
-    } 
+    },
+    BULKADD: ({tournamentId}) => {
+        return `https://api.challonge.com/v1/tournaments/${tournamentId}/participants/bulk_add.json`
+    }
 }
