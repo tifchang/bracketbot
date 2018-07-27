@@ -14,8 +14,8 @@
     "mongoose": "^5.2.5",
     "nodemon": "^1.18.3",
     "query-string": "^6.1.0",
-    "uuid": "^3.3.2",
-    "slackbots": "^1.1.0"
+    "slackbots": "^1.1.0",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {},
   "scripts": {

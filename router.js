@@ -13,8 +13,26 @@ var lineReader = require('readline').createInterface({
   });
 
  // receives data from slack bot
-const botPipeline = (email) => {
-    throw DOMException("Not Implemented");
+const main = (email, password, token) => {
+    // algorithm
+
+    // 1. check if email is in the database
+    var valuesArrayOrFalse = checkDbFile(email);
+
+    if (valuesArrayOrFalse) {
+        // 1a. it is in the database, get the token and email back
+        // decrypt the token 
+        email = valuesArrayOrFalse[0];
+        token = decryptToken(valuesArrayOrFalse[1]);
+    } else {
+    // 1b. it is not in the database. pass email to oauth2.0 and verify it
+        // if valid response, add email and encrypted token to the datbase
+    }
+    
+    // 2. get calendar information
+    // 3. schedule game 
+    // 4. get scheduling information back
+    // 5. send scheduling information to the bot
 }
 
 // helper function that writes this file to the database
@@ -27,13 +45,13 @@ const writeToDbFile = (email, token) => {
     });
 }
 
-const encryptToken = (token) => {
+const encryptToken = (token, password) => {
     // todo encrypt token
-    return CryptoJS.AES.encrypt(token, "shipit").toString();
+    return CryptoJS.AES.encrypt(token, password).toString();
 }
 
-const decryptToken = (token) => {
-    return CryptoJS.AES.decrypt(token.toString(), "shipit")
+const decryptToken = (token, password) => {
+    return CryptoJS.AES.decrypt(token.toString(), password)
                                         .toString(CryptoJS.enc.Utf8);
 }
 
@@ -42,7 +60,7 @@ const checkDbFile = (email) => {
     lineReader.on('line', function (line) {
         let data = line.split("|");
         if (email === data[0].trim()) {
-            return true;
+            return data;
         }
       });
       return false;

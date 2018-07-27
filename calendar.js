@@ -5,12 +5,24 @@ const {google} = require('googleapis');
 const SCOPES = ['https://www.googleapis.com/auth/calendar'];
 const TOKEN_PATH = 'token.json';
 
-module.exports = authorize;
+module.exports = getOAuthClient;
 
-fs.readFile('credentials.json', (err, content) => {
-  if (err) return console.log('Error loading client secret file:', err);
-  authorize(JSON.parse(content), listEvents);
-});
+function getOAuthClient() {
+  return fs.readFile('credentials.json', (err, content) => {
+    if (err) return console.log('Error loading client secret file:', err);
+    const credentials = JSON.parse(content);
+    const {client_secret, client_id, redirect_uris} = credentials.installed;
+    const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
+    // Check if we have previously stored a token.
+    return fs.readFile(TOKEN_PATH, (err, token) => {
+      if (err) return getAccessToken(oAuth2Client, callback);
+      oAuth2Client.setCredentials(JSON.parse(token));
+      // console.log(oAuth2Client, "yeet");
+      listEvents(oAuth2Client);
+      return oAuth2Client;
+    });
+  })
+}
 
 function authorize(credentials) {
   const {client_secret, client_id, redirect_uris} = credentials.installed;
@@ -18,9 +30,10 @@ function authorize(credentials) {
       client_id, client_secret, redirect_uris[0]);
 
   // Check if we have previously stored a token.
-  fs.readFile(TOKEN_PATH, (err, token) => {
+  return fs.readFile(TOKEN_PATH, (err, token) => {
     if (err) return getAccessToken(oAuth2Client, callback);
     oAuth2Client.setCredentials(JSON.parse(token));
+    console.log(oAuth2Client, "yeet");
     return oAuth2Client;
   });
 }
@@ -72,4 +85,3 @@ function listEvents(auth) {
     }
   });
 }
-
