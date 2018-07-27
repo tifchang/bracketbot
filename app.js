@@ -22,12 +22,27 @@ const db = new Sequalize({
 })
 
 const User = db.define('user', {
-    name: Sequalize.STRING,
-    real_name: Sequalize.STRING,
-    display_name: Sequalize.STRING,
-    email: Sequalize.STRING,
+    name: {
+        type: Sequalize.STRING,
+        primaryKey: true
+    },
+    real_name: {
+        type: Sequalize.STRING,
+        primaryKey: true
+    },
+    display_name: {
+        type: Sequalize.STRING,
+        primaryKey: true
+    },
+    email: {
+        type: Sequalize.STRING,
+        primaryKey: true
+    },
     pid: Sequalize.STRING,
-    slack_id: Sequalize.STRING
+    slack_id: {
+        type: Sequalize.STRING,
+        primaryKey: true
+    }
 })
 
 
