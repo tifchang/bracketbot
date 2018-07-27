@@ -1,5 +1,6 @@
 var google = require('googleapis');
 const {OAuth2Client} = require('google-auth-library');
+const BASE_URL = 'http://localhost';
 var axios = require('axios');
 
 //actually look for gaps and add to calendar 
@@ -15,9 +16,11 @@ function appointmentHelper(user1, user2, name){
     potential = lookForTimes(user1, user2, startDate);                          
     var freeBlocks1 = potential[0];
     var freeBlocks2 = potential[1];
-    startDate = potential[2];                               
+    startDate = potential[2];               
     var targetDate = findAppointment(user1, user2, freeBlocks1, freeBlocks2, startDate); 
-    return makeAppointment(user1, user2, targetDate, name); 
+    var target = new Date(targetDate);
+    console.log("CONSOLE LOG: ", user1, user2, target, name);
+    return makeAppointment(user1, user2, target, name); 
 }
 
 //makes a freebusy query to google cal api
@@ -29,7 +32,7 @@ function lookForTimes(user1, user2, startDate) {
     var endDate = new Date(startDate.getDate());
     endDate.setHours(17, 30, 0, 0); 
 
-    axios.post("http://1d59a544.ngrok.io/freebusy", {
+    axios.post(BASE_URL + "/freebusy", {
         timeMin: startDate.toISOString().split(".")[0].concat("-08:00"),
         timeMax: endDate.toISOString().split(".")[0].concat("-08:00"),
         items: [user1, user2]
@@ -98,7 +101,8 @@ function findAppointment(user1, user2, freeBlocks1, freeBlocks2, startDate){
 
 //actually makes an appointment in gcal
 //returns a success message and the datetime of the new appointment or a failure message
-function makeAppointment(user1, user2, targetDate, summary){
+function makeAppointment(user1, user2, targetDate, summary ){
+    console.log("DATETYPE: ", user1, user2, targetDate, summary)
     var userArr = []; 
     userArr.push(user1); 
     userArr.push(user2);
@@ -106,7 +110,7 @@ function makeAppointment(user1, user2, targetDate, summary){
     var endDate = new Date(); 
     endDate.setTime(targetDate.getTime() +  900000); 
 
-    axios.post("http://1d59a544.ngrok.io/events/insert", {
+    axios.post(BASE_URL + "/events/insert", {
         summary,
         start: targetDate.toISOString().split(".")[0].concat("-08:00"),
         end: endDate.toISOString().split(".")[0].concat("-08:00"),
