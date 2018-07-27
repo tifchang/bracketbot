@@ -1,5 +1,15 @@
 var google = require('googleapis');
-var googleAuth = require('google-auth-library');
+const {OAuth2Client} = require('google-auth-library');
+
+//actually look for gaps and add to calendar 
+
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+/////////// OAuth Features ////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
 
 var GoogleAuth;
 var API_KEY = 'AIzaSyAPMqDWheRXuFixwbVWEVcXH2tb27UnzWM';
@@ -24,8 +34,10 @@ function initClient() {
         'discoveryDocs': [discoveryUrl],
         'clientId': CLIENT_ID,
         'scope': SCOPE
-    }).then(function () {
-        GoogleAuth = gapi.auth2.getAuthInstance();
+    }).then(function (v) {
+        const client = new googleAuth(CLIENT_ID);
+        const GoogleAuth = gapi.auth2.getAuthInstance();
+        return GoogleAuth;
     });
 }
 
@@ -100,6 +112,14 @@ function lookForTimes(calendar1, calendar2, startDate) {
     });
 }
 
+<<<<<<< HEAD
+const sendAuthToSlack = () => {
+    const client = new OAuth2Client(CLIENT_ID);
+    const ticket = await 
+}
+
+sendAuthToSlack();
+=======
 //looks for a suitable appointment block within the free blocks 
 //params: the two participants' calendars and the list of freeBlock objects which contain the start and end times as dates
 //on success: returns the start datetime of the block that is free and at least 15 minutes long
@@ -152,3 +172,4 @@ function makeAppointment(user1, user2, calendar1, calendar2, targetDate){
         return "Your game was scheduled for "+targetDate+". Check it out: "+res.htmlLink; 
       });
 }
+>>>>>>> 379c6dfe331bd44424df72e75213f494a71f322b
