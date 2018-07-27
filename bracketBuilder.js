@@ -60,6 +60,21 @@ class BracketBuilder {
 
   /**
    * 
+   * @param {string} id tournament id 
+   */
+  fetchBracketInfo({ id }) {
+    return axios.get(this.resolveURL(id), {
+      api_key: this.API_URL
+    })
+    .then(res => res.data)
+    .then(data => data.map(({ tournament }) => {
+      return {id:tournament.id, name:tournament.name}
+    }))
+    .catch(err => err);
+  }
+
+  /**
+   * 
    * @param {string} id of tournament to delete
    * @returns {int} status code (200 === success)
    */
