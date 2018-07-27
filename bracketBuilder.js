@@ -111,16 +111,9 @@ class BracketBuilder {
     return axios.post(endpoints.PARTICIPANT({tournamentId}), 
       { api_key: this.API_URL, name: name }, {headers: { 'Content-Type': 'application/json'}
     })
-<<<<<<< HEAD
-    .then(res => {
-      console.log(res);
-      return res.status;
-    })
-=======
     .then(res => res)
     .then(({ data }) => data)
     .then(({ participant }) => ({id:participant.id}))
->>>>>>> cb8f9248f478795cad5622285030c7b6ecbed943
     .catch(err => err);
   }
 
