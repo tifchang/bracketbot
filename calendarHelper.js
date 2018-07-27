@@ -56,11 +56,11 @@ function getGoogleAuth() {
 
 function appointmentHelper(user1, user2, startDate){
     //TODO: 
-    //var calendar1 = user1. GET THE CALENDAR ID might have to use the list gcal api?? 
-    //var calendar2 = user2. GET THE CALENDAR ID
+    //var calendar1 = user1. GET EMAIL
+    //var calendar2 = user2. GET EMAIL
 
     var freeBlocks = lookForTimes(calendar1, calendar2, startDate);
-    var targetDate = findAppointment(calendar1, calendar2, freeBlocks).toString(); 
+    var targetDate = findAppointment(calendar1, calendar2, freeBlocks, startDate).toString(); 
     return makeAppointment(user1, user2, calendar1, calendar2, targetDate); 
 }
 
@@ -69,9 +69,9 @@ function appointmentHelper(user1, user2, startDate){
 //on success: returns an array of block objects, which hold a start datetime and end datetime as dates
 //on failure: sets the start datetime to 9am the next day and recursively calls itself
 function lookForTimes(calendar1, calendar2, startDate) {
-    //TODO: somewhere we need to deal with if the tournament is requested after 5:30pm
+    //TODO: (somewhere we need to deal with if the tournament is requested after 5:30pm)
     var endDate = new Date(startDate.getDate());
-    endDate.setTime
+    endDate.setHours(17, 30, 0, 0); 
 
     var resource = {
         'timeMin': startDate.toISOString,
@@ -85,24 +85,26 @@ function lookForTimes(calendar1, calendar2, startDate) {
         }
         ]
     };
-    calendar.freebusy.query({                   //does this do anything? fuck if I know
+    calendar.freebusy.query({                  
         resource: resource
-    })
-    //TODO: error handling?
-
-    //TODO:
-    // if the freebusy array got populated
-    //     return pendingMeeting = array of start and end times as objects which contain the start and end times as dates 
-    // else   
-    //     var newStart = 9am the day after the start date
-    //     return lookForTimes(calendar1, calendar2, newStart);
+    }, function(err, response) {
+        if (err) {
+            var newStart = new Date(); 
+            newStart.setDate(startDate.getDate() + 1);
+            newStart.setHours(8, 0, 0, 0); 
+            return lookForTimes(calendar1, calendar2, newStart);
+        }
+        var blocks = response.items;
+        var freeBlocks = blocks.map(({timeMin, timeMax}) =>  {timeMin, timeMax}); 
+        return freeBlocks; 
+    });
 }
 
 //looks for a suitable appointment block within the free blocks 
 //params: the two participants' calendars and the list of freeBlock objects which contain the start and end times as dates
 //on success: returns the start datetime of the block that is free and at least 15 minutes long
 //on failure: that means there is no free block that's long enough, so it calls lookForTimes with tomorrow as the next start date 
-function findAppointment(calendar1, calendar2, freeBlocks){
+function findAppointment(calendar1, calendar2, freeBlocks, startDate){
     freeBlocks.foreach((block) => {
         var start = new Date(block.startTime);
         var end = new Date(block.endTime); 
@@ -113,6 +115,8 @@ function findAppointment(calendar1, calendar2, freeBlocks){
         }
     });
     var newStart = new Date(); 
+    newStart.setDate(startDate.getDate() + 1);
+    newStart.setHours(8, 0, 0, 0); 
     return lookForTimes(calendar1, calendar2, newStart); 
 }
 
@@ -120,12 +124,12 @@ function findAppointment(calendar1, calendar2, freeBlocks){
 //returns a success message and the datetime of the new appointment or a failure message
 function makeAppointment(user1, user2, calendar1, calendar2, targetDate){
     var googleAuthorization = getGoogleAuth(); 
-    //TODO: 
     var userArr = []; 
+    //TODO: 
     //userArr.push({displayName: , email: }); ADD THE USERS WITH THEIR NAMES AND EMAILS TO THE ARRAY
     //userArr.push({displayName: , email: })
-    var endDate = new Date(targetDate); 
-    //add fifteen minutes to the endDate
+    var endDate = new Date(); 
+    endDate = targetDate.getTime() +  900000; 
 
     var event = {
         'start': {
@@ -137,11 +141,14 @@ function makeAppointment(user1, user2, calendar1, calendar2, targetDate){
         'attendees': userArr
     };
     calendar.events.insert({
-    auth: googleAuthorization,
-    calendarId: 'primary',                  //primary keyword used for accessing primary calendar of the currently logged user, otherwise use gcal api list 
-    resource: event,
-    })
-    //TODO: error handling? 
-
-    return "The appointent was set for "+targetDate+"!"; 
+        auth: googleAuthorization,
+        calendarId: 'primary',                  //primary keyword used for accessing primary calendar of the currently logged user, otherwise use calendarId = email
+        resource: event,
+    }, function(err, response) {
+        if (err) {
+            return "Something went wrong :( Please try again!"
+        }
+        var res = response.items;
+        return "Your game was scheduled for "+targetDate+". Check it out: "+res.htmlLink; 
+      });
 }
