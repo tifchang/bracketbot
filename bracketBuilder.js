@@ -63,12 +63,10 @@ class BracketBuilder {
    */
   fetchBracketInfo({ id }) {
     return axios.get(this.resolveURL(id), {
-      api_key: this.API_URL
+      params: { api_key: this.API_URL }
     })
     .then(res => res.data)
-    .then(data => data.map(({ tournament }) => {
-      return {id:tournament.id, name:tournament.name}
-    }))
+    .then(({tournament}) => ({id:tournament.id, name:tournament.name}))
     .catch(err => err);
   }
 
@@ -168,3 +166,6 @@ class BracketBuilder {
 }
 
 module.exports = BracketBuilder;
+
+const bb = new BracketBuilder();
+bb.fetchBracketInfo({id: "4851545"}).then(res => console.log(res)).catch(err => console.log(err));
