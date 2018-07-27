@@ -68,7 +68,8 @@ bot.on('message', (data) => {
         for (i = 2; i < msgArray.indexOf("bracket"); i++) {
             bracketName += (msgArray[i] + " ");
         }
-        createTournament(bracketName);
+        var cap = msgArray[msgArray.indexOf("bracket") + 2];
+        createTournament(bracketName, cap);
     }
     // Add players
     else if (msgArray[1].toLowerCase() === "add") {
@@ -160,16 +161,26 @@ function oAuthNotification(name, oAuthURL) {
 
 
 // Message helper functions
-function createTournament(bracketName) {
+function createTournament(name, cap) {
     // TODO: insert function to create tournament
-    bb.createBracket({ bracketName, cap }).then(res => {
-        console.log(res);
+    console.log("BB: " + name + "  " + cap);
+    bb.createBracket({ name, cap }).then(res => {
+        console.log("BRACKET STATUS: " + res)
+        if (res.status == 200) {
+            bot.postMessageToChannel(
+                'general', 
+                ":trophy: :sparkles: Created the *" + name + "* bracket with ID *" + res.data.tournament.id +
+                "* for *" + cap + "* contenders." + 
+                ":heavy_exclamation_mark: If you'd like to join " +
+                "this bracket, please write <@UBXBUSPJ9> _add @youORfriend to *" + res.data.tournament.id + "*_ :heavy_exclamation_mark:");
+        } else {
+            bot.postMessageToChannel(
+                'general',
+                "Oops! Something went wrong here. Try again!"
+            )
+        }
     })
-    bot.postMessageToChannel(
-        'general', 
-        ":trophy: :sparkles: Created the *" + bracketName + "* bracket with ID [Bracket ID]." + 
-        ":heavy_exclamation_mark: If you'd like to join " +
-        "this bracket, please write _@Lil BB add @youORfriend to [Bracket ID]_ :heavy_exclamation_mark:");
+    
 }
 
 function addSingleUser(id, name, tournamentId) {
