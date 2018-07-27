@@ -1,5 +1,15 @@
 var google = require('googleapis');
-var googleAuth = require('google-auth-library');
+const {OAuth2Client} = require('google-auth-library');
+
+//actually look for gaps and add to calendar 
+
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+/////////// OAuth Features ////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
 
 var GoogleAuth;
 var API_KEY = 'AIzaSyAPMqDWheRXuFixwbVWEVcXH2tb27UnzWM';
@@ -26,8 +36,10 @@ function initClient() {
         'discoveryDocs': [discoveryUrl],
         'clientId': CLIENT_ID,
         'scope': SCOPE
-    }).then(function () {
-        GoogleAuth = gapi.auth2.getAuthInstance();
+    }).then(function (v) {
+        const client = new googleAuth(CLIENT_ID);
+        const GoogleAuth = gapi.auth2.getAuthInstance();
+        return GoogleAuth;
     });
 }
 
@@ -46,4 +58,9 @@ function getAuthSuccess() {
 
 }
 
-//actually look for gaps and add to calendar 
+const sendAuthToSlack = () => {
+    const client = new OAuth2Client(CLIENT_ID);
+    const ticket = await 
+}
+
+sendAuthToSlack();
