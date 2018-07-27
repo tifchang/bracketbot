@@ -161,10 +161,10 @@ function oAuthNotification(name, oAuthURL) {
 
 
 // Message helper functions
-function createTournament(name, cap) {
+function createTournament(name, cap, username) {
     // TODO: insert function to create tournament
     console.log("BB: " + name + "  " + cap);
-    bb.createBracket({ name, cap }).then(res => {
+    const id = bb.createBracket({ name, cap }).then(res => {
         console.log("BRACKET STATUS: " + res)
         if (res.status == 200) {
             bot.postMessageToChannel(
@@ -180,6 +180,15 @@ function createTournament(name, cap) {
             )
         }
     })
+
+    bb.addSingleParticipant({tournamentId:id, name: username})
+        .then(status => {
+            if(status === 200)
+                bot.postMessage('general', ":heavy_plus_sign: :gentlyplz: <@" + username + "> has been successfully added to " + id + " bracket.")
+        })
+        .catch(_ => {
+            bot.postMessage('general', 'Oops! Something went wrong here. Try again!');
+        })
     
 }
 

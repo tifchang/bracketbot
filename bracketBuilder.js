@@ -27,7 +27,6 @@ class BracketBuilder {
    * @returns {Promise}
 	 */
 	createBracket({ name, cap }) {
-    console.log("SERVER: ", name)
 		return axios.post(this.resolveURL(), { 
 			name,
       url: `ATLASSIAN_${name.replace(/ /g,'')}`,
@@ -35,6 +34,8 @@ class BracketBuilder {
 			api_key: this.API_URL
     }, {'Content-Type': 'application/json'})
       .then(res => res)
+      .then(({ data }) => data)
+      .then(({ tournament }) => tournament.id)
       .catch(err => err);
   }
 
@@ -109,7 +110,9 @@ class BracketBuilder {
     return axios.post(endpoints.PARTICIPANT({tournamentId}), 
       { api_key: this.API_URL, name: name }, {headers: { 'Content-Type': 'application/json'}
     })
-    .then(res => res.status)
+    .then(res => res)
+    .then(({ data }) => data)
+    .then(({ participant }) => ({id:participant.id}))
     .catch(err => err);
   }
 
@@ -168,4 +171,4 @@ class BracketBuilder {
 module.exports = BracketBuilder;
 
 const bb = new BracketBuilder();
-bb.fetchBracketInfo({id: "4851545"}).then(res => console.log(res)).catch(err => console.log(err));
+bb.createBracket({name: "hello123", cap:10}).then(res => console.log(res)).catch(err => console.log(err));
