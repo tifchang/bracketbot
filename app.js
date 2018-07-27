@@ -9,7 +9,7 @@ var google = require('googleapis');
 var googleAuth = require('google-auth-library');
 const SlackBot = require('slackbots');
 var BracketBuilder = require('./bracketBuilder');
-var appointmentHelper = require('./calendarHelper');
+var makeAppointment = require('./calendarHelper');
 
 // Google OAuth instantiation
 // var OAuth2 = google.auth.OAuth2;
@@ -30,16 +30,6 @@ const User = db.define('user', {
     slack_id: Sequalize.STRING
 })
 
-db.sync().then(() => {
-    User.create({
-        name: "Cesar Francisco Ibarra",
-        real_name: "Wtf this is my real name",
-        display_name: "Cesar Weezer",
-        email: "cesar@stanfurd.edu",
-        pid: "696969",
-        slack_id: "1234"
-    })
-})
 
 // express server setup
 var app = express();
@@ -75,7 +65,6 @@ bot.on('start', () => {
         ":wave: Hello, is it _*Lil BB*_ you are looking for? :gentlyplz:", 
         params);
 
-    // TODO: NODE CLIENT
 })
 
 // Error handler
@@ -104,9 +93,8 @@ bot.on('message', (data) => {
     // Add players
     else if (msgArray[1].toLowerCase() === "add") {
         var slackId = msgArray[2].substring(2, msgArray[2].indexOf(">"));
-        var name = "test" // get some sort of name here
         var bracketId = msgArray[4];
-        addSingleUser(slackId, name, bracketId);
+        addSingleUser(slackId, all_users[slackId].real_name, bracketId);
     }
 
     // CAL TESTER
@@ -148,6 +136,11 @@ bot.on('message', (data) => {
             })
             .catch(err => console.log(err));
     }
+
+    // Update match 
+    // else if (msgArray[1].toLowerCase() === "cock") {
+    //     sendInvites()
+    // }
 
     // List participants in tournament
     else if (msgArray[1].toLowerCase() === "players") {
@@ -228,7 +221,7 @@ function createTournament(name, cap, slackId) {
             )
         }
         // Name here needs to be display name or something
-        addSingleUser(slackId, name, res);
+        addSingleUser(slackId, all_users[slackId].real_name, res);
     })
 }
 
@@ -244,15 +237,17 @@ function endTournament(id) {
 function addSingleUser(slackId, name, tournamentId) {
     bb.addSingleParticipant({ tournamentId, name })
         .then( ({ id }) => {
+            console.log("ID COMIN THRUUUU: ", id);
             bb.fetchBracketInfo({id: tournamentId}).then(resp => {
                 if (resp.cap <= resp.count) {
                     bot.postMessage('general', ":heavy_plus_sign: :gentlyplz: <@" + slackId + "> has been successfully added to " + tournamentId + " bracket. The cap has been reached and the games will now begin!");
                     bb.startTournament({tournamentId});
+                    sendInvites();
                 } else {
                     bot.postMessage('general', ":heavy_plus_sign: :gentlyplz: <@" + slackId + "> has been successfully added to " + tournamentId + " bracket.");
                 }
             })
-            User.create({name, real_name: name, display_name: name, email: "", pid: id, slack_id: slackId})
+            User.insertOrUpdate({name, real_name: all_users[slackId].real_name, display_name: all_users[slackId].display_name, email: all_users[slackId].email, pid: id, slack_id: slackId})
                 .then(res => console.log(res))
                 .catch(err => console.log(err));
         })
@@ -261,40 +256,65 @@ function addSingleUser(slackId, name, tournamentId) {
         })
 }
 
+// Sends cal invites 
+function sendInvites({tournamentId}) {
+    let myUsers = new Set();
+    bb.getMatches(tournamentId)
+    .then(matches => {
+        console.log("Cal matches for a tournament: ", matches);
+        matches.forEach(m => {
+
+        });
+    });
+
+}
+
+// CLEAR
+// User.destroy({where: {}, truncate: true});
+
 // Updating match when user inputs score and winner
 function updateTournament(tournamentId, winnerId) {
     bb.getMatch({tournamentId, winnerId})
         .then(matches => {
             let match;
+            // console.log("MATCH: ", matches);
             matches.forEach(m => {
+                // console.log(m, winnerId, m.player1)
                 if (winnerId === `${m.player1}` || winnerId === `${m.player2}`) {
-                    console.log("I FOUND A MATCH.", m)
+                    // console.log("I FOUND A MATCH.", m)
                     match = m;
                     return;
                 }
             })
-            console.log("match2: ", match);
+            // console.log("match2: ", match);
             let whichPlayerWon;
             if (winnerId === match.player1) {
                 whichPlayerWon = "player1";
-                bb.updateMatch({ matchId: match.matchId, tournamentId: tournamentId, winnerId, loserId:match.player2, whichPlayerWon })
-                .then(res => {
-                    bot.postMessageToChannel(
-                        'general',
-                        ":aw_yeah: :banana_dance: Congratulations on the win <@" + winnerId + ">! :banana_dance: :aw_yeah: Stay tuned for the next contender."
-                    )
-                })
-                .catch(err => console.log(err));
-            } else {
-                whichPlayerWon = "player2";
-                bb.updateMatch({ matchId: match.matchId, tournamentId: tournamentId, winnerId, loserId:match.player1, whichPlayerWon })
+                User.findOne({where: {pid: winnerId}}).then(user => {
+                    console.log("RESSSS: ", res)
+                    bb.updateMatch({ matchId: match.matchId, tournamentId: tournamentId, winnerId, loserId:match.player2, whichPlayerWon })
                     .then(res => {
                         bot.postMessageToChannel(
                             'general',
-                            ":aw_yeah: :banana_dance: Congratulations on the win <@" + winnerId + ">! :banana_dance: :aw_yeah: Stay tuned for the next contender."
+                            ":aw_yeah: :banana_dance: Congratulations on the win <@" + user.slack_id + ">! :banana_dance: :aw_yeah: Stay tuned for the next contender."
                         )
                     })
                     .catch(err => console.log(err));
+                }).catch(err => console.log(err));
+                
+            } else {
+                whichPlayerWon = "player2";
+                User.findOne({where: {pid: winnerId}}).then(user => {
+                    bb.updateMatch({ matchId: match.matchId, tournamentId: tournamentId, winnerId, loserId:match.player1, whichPlayerWon })
+                    .then(res => {
+                        bot.postMessageToChannel(
+                            'general',
+                            ":aw_yeah: :banana_dance: Congratulations on the win <@" + user.slack_id + ">! :banana_dance: :aw_yeah: Stay tuned for the next contender."
+                        )
+                    })
+                    .catch(err => console.log(err));
+                })
+                .catch(err => console.log(err));
             }
         })
 }

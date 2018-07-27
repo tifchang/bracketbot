@@ -158,6 +158,27 @@ class BracketBuilder {
     .catch(err => err);
   }
 
+  /**
+   * Get matches
+   * @param {string} tournamentId 
+   * @param {string} uid userId
+   * @returns {array} of objs of all matches in a tournament
+   */
+  getMatches({ tournamentId }) {
+    return axios.get(endpoints.GETMATCH({tournamentId}), 
+      { params: {api_key: this.API_URL} 
+    })
+    .then(res => {
+      return res.data.map(({match}) => ({
+            tournamentId: match.tournament_id, 
+            matchId: match.id, 
+            player1: match.player1_id,
+            player2: match.player2_id
+      }))
+    })
+    .catch(err => err);
+  }
+
    /**
    * Start tournament
    * @param {string} tournamentId 
