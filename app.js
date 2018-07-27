@@ -7,14 +7,12 @@ var mongoose = require('mongoose');
 var google = require('googleapis');
 var googleAuth = require('google-auth-library');
 const SlackBot = require('slackbots');
+var BracketBuilder = require('./bracketBuilder');
 
 // Google OAuth instantiation
 // var OAuth2 = google.auth.OAuth2;
 
-const BracketBuilder = require('./bracketBuilder');
-
 const bb = new BracketBuilder();
-bb.addSingleParticipant({tournamentId: "4852317", name:"nora"}).then(res => console.log(res));
 
 
 // express server setup
@@ -80,14 +78,20 @@ bot.on('message', (data) => {
         addSingleUser(slackId, name, bracketId);
     }
 
-    // List bracket
+    // List brackets
     else if (msgArray[1].toLowerCase() === "list") {
         var bracketId = msgArray[2];
-        // TODO: add function that returns the bracket URL
-        var bracketURL = "www.google.com";
-        bot.postMessageToChannel(
-            'general', 
-            ":trophy: :eyes: To see the bracket, click here: " + bracketURL);
+        bb.fetchAllBracketInfo().then(g => {
+            var tournamentsString = "";
+            g.forEach(t => {
+                tournamentsString += (":trophy: *" + t.name + " (ID: " + t.id + "):* see bracket here :eyes: " + t.url + "\n")
+            })
+            bot.postMessageToChannel(
+                'general', 
+                tournamentsString
+            );
+        });
+        
     }
 
     // Update match 
@@ -99,14 +103,23 @@ bot.on('message', (data) => {
     }
 
     // List participants in tournament
-
     else if (msgArray[1].toLowerCase() === "players") {
         var bracketId = msgArray[2];
-        // TODO: function to return list of all players
-        bot.postMessageToChannel(
-            'general',
-            ":busts_in_silhouette: Players are: "
-        )
+        bb.indexParticipants({id: bracketId}).then( players => {
+            var playerString = "";
+            for (i = 0; i < players.length; i++) {
+                if (i !== players.length - 1) {
+                    playerString += (players[i].name + ", ");
+                } else {
+                    playerString += "and " + players[i].name
+                }
+            }
+            console.log("HELLO: ", playerString);
+            bot.postMessageToChannel(
+                'general',
+                ":busts_in_silhouette: Players in *" + "* are: " + playerString
+            )
+        });
     }
 
     // Knife surya
@@ -149,6 +162,9 @@ function oAuthNotification(name, oAuthURL) {
 // Message helper functions
 function createTournament(bracketName) {
     // TODO: insert function to create tournament
+    bb.createBracket({ bracketName, cap }).then(res => {
+        console.log(res);
+    })
     bot.postMessageToChannel(
         'general', 
         ":trophy: :sparkles: Created the *" + bracketName + "* bracket with ID [Bracket ID]." + 
@@ -156,13 +172,16 @@ function createTournament(bracketName) {
         "this bracket, please write _@Lil BB add @youORfriend to [Bracket ID]_ :heavy_exclamation_mark:");
 }
 
-function addSingleUser(id, name, bracketId) {
+function addSingleUser(id, name, tournamentId) {
     // TODO: insert function to add user 
-    var bracketName = "peanut butter sauce";
-    bot.postMessageToChannel(
-        'general',
-        ":heavy_plus_sign: :gentlyplz: <@" + id + "> has been successfully added to " + bracketId + " bracket."
-    );
+    bb.addSingleParticipant({ tournamentId, name }).then(res => {
+        console.log(res);
+        bot.postMessageToChannel(
+            'general',
+            ":heavy_plus_sign: :gentlyplz: <@" + id + "> has been successfully added to " + tournamentId + " bracket."
+        );
+    })
+
 }
 
 function updateTournament(bracketId, matchId, winner) {

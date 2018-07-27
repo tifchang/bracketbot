@@ -26,7 +26,7 @@ class BracketBuilder {
    * @param {int} cap player cap
    * @returns {Promise}
 	 */
-	createBracket({ name, startTime, description, cap }) {
+	createBracket({ name, cap }) {
 		return axios.post(this.resolveURL(), { 
 			name,
 			description,
@@ -125,6 +125,7 @@ const bb = new BracketBuilder();
 // bb.deleteBracket({id: "4851658"}).then(status => console.log(status)).catch(err => console.log(err));
 // bb.createBracket({name: "Kiki DO YOU LOVE ME", startTime: new Date(), description: "ayo", cap: 10}).then(status => console.log(status)).catch(err => console.log(err));
 // bb.fetchAllBracketInfo().then(t => console.log(t));
+
 // bb.indexParticipants({id: "4852317"}).then(rs)
 // bb.addSingleParticipant({tournamentId: "4851646", name:"tiff3"}).then(res => console.log(res));
 
