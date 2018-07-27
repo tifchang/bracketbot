@@ -208,14 +208,29 @@ function addSingleUser(slackId, name, tournamentId) {
 }
 
 function updateTournament(tournamentId, matchId, winnerId) {
-    bb.updateMatch({ matchId, tournamentId, winnerId }).then(res => {
-        console.log("UPDATE: " + res);
-        bot.postMessageToChannel(
-            'general',
-            ":aw_yeah: :banana_dance: Congratulations on the win <@" + winnerId + ">! :banana_dance: :aw_yeah: Stay tuned for the next contender."
-        )
-    })
-    
+    bb.getMatch({tournamentId, winnerId})
+        .then(({player1, player2}) => {
+            let whichPlayerWon;
+            if (winnerId === player1) {
+                whichPlayerWon = "player1";
+                bb.updateMatch({ matchId, tournamentId, winnerId, player2, whichPlayerWon}).then(res => {
+                    console.log("UPDATE: " + res);
+                    bot.postMessageToChannel(
+                        'general',
+                        ":aw_yeah: :banana_dance: Congratulations on the win <@" + winnerId + ">! :banana_dance: :aw_yeah: Stay tuned for the next contender."
+                    )
+                })
+            } else {
+                whichPlayerWon = "player2";
+                bb.updateMatch({ matchId, tournamentId, winnerId, player1, whichPlayerWon})
+                    .then(res => {
+                        bot.postMessageToChannel(
+                            'general',
+                            ":aw_yeah: :banana_dance: Congratulations on the win <@" + winnerId + ">! :banana_dance: :aw_yeah: Stay tuned for the next contender."
+                        )
+                    })
+            }
+        })
 }
 
 

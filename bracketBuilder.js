@@ -166,17 +166,26 @@ class BracketBuilder {
       return res;
     })
     .catch(err => err);
-    
   }
 
   /**
    * 
    */
-  updateMatch({ matchId, tournamentId, winnerId}) {
-    return axios.put(endpoints.UPDATEMATCH({tournamentId, matchId}),
-      {api_key: this.API_URL, winner_id: winnerId}, { headers: {'Content-Type': 'application/json'}
+  updateMatch({ matchId, tournamentId, winnerId, loser_id, whichPlayerWon }) {
+    const PLAYERS = Object.freeze({ PLAYER_1: "player1", PLAYER_2: "player2"});
+
+    return axios.put(endpoints.UPDATEMATCH({tournamentId, matchId}), {
+        api_key: this.API_URL,
+        match: {
+          winner_id: winnerId,
+          loser_id: loser_id,
+          scores_csv: whichPlayerWon === PLAYERS.PLAYER_1 ? "1-0" : "0-1"
+        }
+      }, { 
+        headers: {'Content-Type': 'application/json'
+      }
     })
-    .then(res => res.status)
+    .then(res => res.data)
     .catch(err => err)
   }
 
@@ -188,6 +197,6 @@ class BracketBuilder {
 module.exports = BracketBuilder;
 
 const bb = new BracketBuilder();
-
-// bb.startTournament({tournamentId: "4852891"}).then(res => console.log(res)).catch(err => console.log(err));
-bb.updateMatch({ matchId: "128720926", tournamentId: "4852891", winnerId: "79012607"}).then(res => console.log(res));
+bb.updateMatch({ matchId:"128720926", tournamentId:"4852891", winnerId: "79012607", loserId: "79012753", whichPlayerWon:"player1"})
+  .then(res => console.log(res))
+  .catch(err => console.log(err));
