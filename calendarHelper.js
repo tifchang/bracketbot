@@ -4,7 +4,7 @@ var axios = require('axios');
 
 //actually look for gaps and add to calendar 
 
-function appointmentHelper(user1, user2, name){
+function appointmentHelper({user1, user2, summary}){
     //start looking for openings starting at the current time, or tomorrow morning if it's after 5:15
     var startDate = new Date();
     if (startDate.getHours() >= 17 && startDate.getMinutes() >=15){
@@ -17,7 +17,7 @@ function appointmentHelper(user1, user2, name){
     var freeBlocks2 = potential[1];
     startDate = potential[2];                               
     var targetDate = findAppointment(user1, user2, freeBlocks1, freeBlocks2, startDate); 
-    return makeAppointment(user1, user2, targetDate, name); 
+    return makeAppointment(user1, user2, targetDate, summary); 
 }
 
 //makes a freebusy query to google cal api
@@ -25,7 +25,7 @@ function appointmentHelper(user1, user2, name){
 //on success: returns an array of block objects, which hold a start datetime and end datetime as dates as well as the date 
 //            in case the function has to go to a new day before finding an opening
 //on failure: sets the start datetime to 8 am the next day and recursively calls itself
-function lookForTimes(user1, user2, startDate) {
+function lookForTimes({user1, user2, startDate}) {
     var endDate = new Date(startDate.getDate());
     endDate.setHours(17, 30, 0, 0); 
 
@@ -81,24 +81,27 @@ function lookForTimes(user1, user2, startDate) {
 //params: the two participants' calendars and the list of freeBlock objects which contain the start and end times as dates
 //on success: returns the start datetime of the block that is free and at least 15 minutes long
 //on failure: that means there is no free block that's long enough, so it calls lookForTimes with tomorrow as the next start date 
-function findAppointment(user1, user2, freeBlocks1, freeBlocks2, startDate){
-    var newBlock = scheduleHelper(freeBlocks1, freeBlocks2);
+function findAppointment({user1, user2, freeBlocks1, freeBlocks2, startDate}){
+    var targetDate = scheduleHelper(freeBlocks1, freeBlocks2);
 
     if(!newBlock){
         var newStart = new Date(); 
         newStart.setDate(startDate.getDate() + 1);
         newStart.setHours(8, 0, 0, 0);
         newPotential = lookForTimes(user1, user2, newStart); 
-        return(findAppointment(user1, user2, newPotential[0], newPotential[1], newPotential[2])); 
+        freeblocks1 = newPotential[0];
+        freeblocks2 = newPotential[1]; 
+        startDate = newPotential[2];
+        return(findAppointment(user1, user2, freeBlocks1, freeBlocks2, startDate)); 
     }
     else {
-        return newBlock; 
+        return targetDate; 
     }
 }
 
 //actually makes an appointment in gcal
 //returns a success message and the datetime of the new appointment or a failure message
-function makeAppointment(user1, user2, targetDate, summary){
+function makeAppointment({user1, user2, targetDate, summary}){
     var userArr = []; 
     userArr.push(user1); 
     userArr.push(user2);
