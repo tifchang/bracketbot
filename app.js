@@ -12,10 +12,7 @@ var BracketBuilder = require('./bracketBuilder');
 // Google OAuth instantiation
 // var OAuth2 = google.auth.OAuth2;
 
-const BracketBuilder = require('./bracketBuilder');
-
 const bb = new BracketBuilder();
-bb.addSingleParticipant({tournamentId: "4852317", name:"nora"}).then(res => console.log(res));
 
 
 // express server setup
@@ -27,8 +24,6 @@ const bot = new SlackBot({
     token: process.env.BOT_TOKEN,
     name: 'Lil BB'
 })
-
-const bb = new BracketBuilder();
 
 // Object that stores mapping of uesrs
 var all_users = {};
@@ -63,8 +58,8 @@ bot.on('message', (data) => {
     }
     // Create tournament
     var msgArray = data.text.split(" ");
+    var senderId = data.user;
     if (!msgArray[0].includes("UBXBUSPJ9")) {
-        console.log("not to Lil BB :(");
         return;
     };
 
@@ -73,7 +68,8 @@ bot.on('message', (data) => {
         for (i = 2; i < msgArray.indexOf("bracket"); i++) {
             bracketName += (msgArray[i] + " ");
         }
-        createTournament(bracketName);
+        var cap = msgArray[msgArray.indexOf("bracket") + 2];
+        createTournament(bracketName, cap, senderId);
     }
     // Add players
     else if (msgArray[1].toLowerCase() === "add") {
@@ -87,9 +83,9 @@ bot.on('message', (data) => {
     else if (msgArray[1].toLowerCase() === "list") {
         var bracketId = msgArray[2];
         bb.fetchAllBracketInfo().then(g => {
-            var tournamentsString;
+            var tournamentsString = "";
             g.forEach(t => {
-                tournamentsString += ":trophy: :eyes: *" + t.name + "(" + t.id + "): see bracket here" + t.url
+                tournamentsString += (":trophy: *" + t.name + " (ID: " + t.id + "):* see bracket here :eyes: " + t.url + "\n")
             })
             bot.postMessageToChannel(
                 'general', 
@@ -103,7 +99,7 @@ bot.on('message', (data) => {
     else if (msgArray[1].toLowerCase() === "update") {
         var bracketId = msgArray[2];
         var matchId = msgArray[4];
-        var winner = msgArray[7];
+        var winner = msgArray[7].substring(2, msgArray[7].indexOf(">"));
         updateTournament(bracketId, matchId, winner);
     }
 
@@ -111,19 +107,26 @@ bot.on('message', (data) => {
     else if (msgArray[1].toLowerCase() === "players") {
         var bracketId = msgArray[2];
         bb.indexParticipants({id: bracketId}).then( players => {
+            console.log(players);
             var playerString = "";
             for (i = 0; i < players.length; i++) {
                 if (i !== players.length - 1) {
                     playerString += (players[i].name + ", ");
+                } else if (players.length === 1) {
+                    playerString = players[i].name;
                 } else {
-                    playerString += "and " + players[i].name
+                    playerString += "and " + players[i].name;
                 }
             }
             console.log("HELLO: ", playerString);
-            bot.postMessageToChannel(
-                'general',
-                ":busts_in_silhouette: Players in *" + "* are: " + playerString
-            )
+            bb.fetchBracketInfo({ id:bracketId }).then(data => {
+                console.log(data)
+                bot.postMessageToChannel(
+                    'general',
+                    ":busts_in_silhouette: Players in *" + data.name + "* are: " + playerString
+                )
+            })
+            
         });
     }
 
@@ -165,29 +168,54 @@ function oAuthNotification(name, oAuthURL) {
 
 
 // Message helper functions
-function createTournament(bracketName) {
-    // TODO: insert function to create tournament
-    bot.postMessageToChannel(
-        'general', 
-        ":trophy: :sparkles: Created the *" + bracketName + "* bracket with ID [Bracket ID]." + 
-        ":heavy_exclamation_mark: If you'd like to join " +
-        "this bracket, please write _@Lil BB add @youORfriend to [Bracket ID]_ :heavy_exclamation_mark:");
+function createTournament(name, cap, slackId) {
+    bb.createBracket({ name, cap }).then(res => {
+        console.log("CREATE RES: ", res)
+        if (res.length !== 0) {
+            bot.postMessageToChannel(
+                'general', 
+                ":trophy: :sparkles: Created the *" + name + "* bracket with ID *" + res +
+                "* for *" + cap + "* contenders." + 
+                ":heavy_exclamation_mark: If you'd like to join " +
+                "this bracket, please write <@UBXBUSPJ9> _add @youORfriend to *" + res + "*_ :heavy_exclamation_mark:");
+        } else {
+            bot.postMessageToChannel(
+                'general',
+                "Oops! Something went wrong here. Try again!"
+            )
+        }
+        addSingleUser(slackId, name, res);
+    })
 }
-
-function addSingleUser(id, name, bracketId) {
-    // TODO: insert function to add user 
-    var bracketName = "peanut butter sauce";
+// Congratulatory end of tournament message
+function endTournament(id) {
+    // TODO: function to get winner 
     bot.postMessageToChannel(
         'general',
-        ":heavy_plus_sign: :gentlyplz: <@" + id + "> has been successfully added to " + bracketId + " bracket."
-    );
-}
-
-function updateTournament(bracketId, matchId, winner) {
-    bot.postMessageToChannel(
-        'general',
-        ":aw_yeah: :banana_dance: Congratulations on the win " + winner + "! :banana_dance: :aw_yeah: Stay tuned for the next contender."
+        ":trophy: :first_place_medal: Congratulations to " + winner + " on DEFEATING _EVERYONE_ in " + bracketName + " :first_place_medal: :trophy:"
     )
+}
+
+function addSingleUser(slackId, name, tournamentId) {
+    bb.addSingleParticipant({ tournamentId, name: all_users[slackId].real_name })
+        .then( ({ id }) => {
+            all_users[slackId].pid = id;
+            bot.postMessage('general', ":heavy_plus_sign: :gentlyplz: <@" + slackId + "> has been successfully added to " + tournamentId + " bracket.")
+        })
+        .catch(_ => {
+            bot.postMessage('general', 'Oops! Something went wrong here. Try again!');
+        })       
+}
+
+function updateTournament(tournamentId, matchId, winnerId) {
+    bb.updateMatch({ matchId, tournamentId, winnerId }).then(res => {
+        console.log("UPDATE: " + res);
+        bot.postMessageToChannel(
+            'general',
+            ":aw_yeah: :banana_dance: Congratulations on the win <@" + winnerId + ">! :banana_dance: :aw_yeah: Stay tuned for the next contender."
+        )
+    })
+    
 }
 
 

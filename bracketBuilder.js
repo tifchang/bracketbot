@@ -16,6 +16,7 @@ class BracketBuilder {
     this.indexParticipants.bind(this);
     this.addSingleParticipant.bind(this);
     this.addBulkParticipants.bind(this);
+    this.startTournament.bind(this);
 	}
 
 	/**
@@ -26,16 +27,16 @@ class BracketBuilder {
    * @param {int} cap player cap
    * @returns {Promise}
 	 */
-	createBracket({ name, startTime, description, cap }) {
+	createBracket({ name, cap }) {
 		return axios.post(this.resolveURL(), { 
 			name,
-			description,
-      start_at: startTime,
       url: `ATLASSIAN_${name.replace(/ /g,'')}`,
       signup_cap: cap,
 			api_key: this.API_URL
     }, {'Content-Type': 'application/json'})
       .then(res => res)
+      .then(({ data }) => data)
+      .then(({ tournament }) => tournament.id)
       .catch(err => err);
   }
 
@@ -55,6 +56,19 @@ class BracketBuilder {
     .then(data => data.map(({ tournament }) => {
       return {id:tournament.id, name:tournament.name, url:`${this.CHALLONGE_URL}${tournament.url}`}
     }))
+    .catch(err => err);
+  }
+
+  /**
+   * 
+   * @param {string} id tournament id 
+   */
+  fetchBracketInfo({ id }) {
+    return axios.get(this.resolveURL(id), {
+      params: { api_key: this.API_URL }
+    })
+    .then(res => res.data)
+    .then(({tournament}) => ({id:tournament.id, name:tournament.name}))
     .catch(err => err);
   }
 
@@ -90,27 +104,80 @@ class BracketBuilder {
 
   /**
    * @param {string} name name displayed in bracket
+   * @param {string} 
    * @return {Promise} statuscode 
    */
-  addSingleParticipant({ tournamentId, name}) {
-    console.log(endpoints.PARTICIPANT({tournamentId}))
+  addSingleParticipant({ tournamentId, name }) {
     return axios.post(endpoints.PARTICIPANT({tournamentId}), 
       { api_key: this.API_URL, name: name }, {headers: { 'Content-Type': 'application/json'}
     })
-    .then(res => res.status)
+    .then(res => res)
+    .then(({ data }) => data)
+    .then(({ participant }) => ({id:participant.id}))
     .catch(err => err);
   }
 
   /**
    * @param {array} participants array of participantId
-   * @return {Promise} statuscode
+   * @return {[Promise]]} statuscode
    */
-  addBulkParticipants({tournamentId}, participants) {
-    return axios.post(endpoints.PARTICIPANT({tournamentId}), 
-      { api_key: this.API_URL, name: participants}, {headers: {'Content-Type': 'application/json'}
+  addBulkParticipants(participants) {
+    const resolver =  participants.map(({tournamentId, name}) => {
+      return this.addSingleParticipant({tournamentId, name})
+        .then(res => res)
+        .catch(err => err);
+    });
+
+    return Promise.all(resolver);
+  }
+
+  /**
+   * Get match
+   * @param {string} tournamentId 
+   * @param {string} uid userId
+   * @returns {array} of objs
+   */
+  getMatch({ tournamentId, participantId }) {
+    return axios.get(endpoints.GETMATCH({tournamentId}), 
+      { params: {api_key: this.API_URL, participant_id: participantId} 
+    })
+    .then(res => {
+      return res.data.map(({match}) => ({
+            tournamentId: match.tournament_id, 
+            matchId: match.id, 
+            player1: match.player1_id,
+            player2: match.player2_id
+      }))
+    })
+    .catch(err => err);
+  }
+
+   /**
+   * Start tournament
+   * @param {string} tournamentId 
+   * @returns {[Promise]} statuscode
+   */
+  startTournament({ tournamentId }) {
+    return axios.post(endpoints.START({tournamentId}), 
+      {api_key: this.API_URL}, {headers: {'Content-Type': 'application/json'}
+    })
+    .then(res => {
+      console.log(res);
+      return res;
+    })
+    .catch(err => err);
+    
+  }
+
+  /**
+   * 
+   */
+  updateMatch({ matchId, tournamentId, winnerId}) {
+    return axios.put(endpoints.UPDATEMATCH({tournamentId, matchId}),
+      {api_key: this.API_URL, winner_id: winnerId}, { headers: {'Content-Type': 'application/json'}
     })
     .then(res => res.status)
-    .catch(err => err);
+    .catch(err => err)
   }
 
   resolveURL(param="") {
@@ -118,13 +185,9 @@ class BracketBuilder {
   }
 }
 
-const bb = new BracketBuilder();
-// bb.deleteBracket({id: "4851658"}).then(status => console.log(status)).catch(err => console.log(err));
-// bb.createBracket({name: "Kiki DO YOU LOVE ME", startTime: new Date(), description: "ayo", cap: 10}).then(status => console.log(status)).catch(err => console.log(err));
-// bb.fetchAllBracketInfo().then(t => console.log(t));
-
-// bb.indexParticipants({id: "4852317"}).then(rs)
-// bb.addSingleParticipant({tournamentId: "4852317", name:"sur"}).then(res => console.log(res));
-// bb.addBulkParticipants({tournamentId: "4852317"}, ["franklin", "lilbb"]).then(res => console.log(res)).catch(err => console.log(err.data.errors));
-
 module.exports = BracketBuilder;
+
+const bb = new BracketBuilder();
+
+// bb.startTournament({tournamentId: "4852891"}).then(res => console.log(res)).catch(err => console.log(err));
+bb.updateMatch({ matchId: "128720926", tournamentId: "4852891", winnerId: "79012607"}).then(res => console.log(res));
