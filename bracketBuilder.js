@@ -27,10 +27,9 @@ class BracketBuilder {
    * @returns {Promise}
 	 */
 	createBracket({ name, cap }) {
+    console.log("SERVER: ", name)
 		return axios.post(this.resolveURL(), { 
 			name,
-			description,
-      start_at: new Date(),
       url: `ATLASSIAN_${name.replace(/ /g,'')}`,
       signup_cap: cap,
 			api_key: this.API_URL
