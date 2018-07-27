@@ -28,62 +28,52 @@ function lookForTimes(user1, user2, startDate) {
     var endDate = new Date(startDate.getDate());
     endDate.setHours(17, 30, 0, 0); 
 
-    var resource = {
-        'timeMin': startDate.toISOString.concat("-08:00"),
-        'timeMax': endDate.toISOString.concat("-08:00"),
-        'groupExpansionMax': 2,
-        'calendarExpansionMax': 2,
-        'items': [
-        {
-            //the user's primary calendar's id is their email
-            'id': user1,       
-            'id': user2
-        }
-        ]
-    };
-    calendar.freebusy.query({                       //CONCERN: does this need authentication?              
-        resource: resource
-    }, function(err, response) {
-        if (err) {
+    axios.post("http://1d59a544.ngrok.io/freebusy", {
+        timeMin: startDate.toISOString.concat("-08:00"),
+        timeMax: endDate.toISOString.concat("-08:00"),
+        items: [user1, user2]
+    })
+    .then(res => console.log(res))
+    .catch(err => {
             var newStart = new Date(); 
             newStart.setDate(startDate.getDate() + 1);
             newStart.setHours(8, 0, 0, 0); 
             return lookForTimes(user1, user2, newStart);
             //potential for infinite recursion lol
-        }
-        var blocks = response.items;
-        let pairs = [];
-        const names = Object.keys(blocks.calendars);
-        names.forEach(name => {
-            let arr = []
-            blocks.calendars[name].busy.forEach(({start, end}) => {
-                arr.push(start)
-                arr.push(end);
-            })
-            pairs.push(arr)
-        });
-
-        //need to add case handling in case there is only 0 or 1 entries in pairs
-        var freeBlocks1 = [];
-        freeBlocks1.push([startDate, pairs[0][0]]);
-        
-        for(var i = 1; i < pairs[0].length - 1; i+=2){
-            freeBlocks1.push([pairs[0][i], pairs[0][i+1]]);
-        }
-        var endOfDay = new Date();
-        endOfDay.setHours(17, 30, 0, 0);  
-        freeBlocks1.push([pairs[0][pairs[0].length], endOfDay]); 
-
-        var freeBlocks2 = [];
-        freeBlocks2.push([startDate, pairs[1][0]]);
-        
-        for(var i = 1; i < pairs[1].length - 1; i+=2){
-            freeBlocks2.push([pairs[1][i], pairs[1][i+1]]);
-        }  
-        freeBlocks2.push([pairs[1][pairs[1].length], endOfDay]); 
-
-        return [freeBlocks1, freeBlocks2, startDate];  
     });
+
+    var blocks = res;
+    let pairs = [];
+    const names = Object.keys(blocks.calendars);
+    names.forEach(name => {
+        let arr = []
+        blocks.calendars[name].busy.forEach(({start, end}) => {
+            arr.push(start)
+            arr.push(end);
+        })
+        pairs.push(arr)
+    });
+
+    //need to add case handling in case there is only 0 or 1 entries in pairs
+    var freeBlocks1 = [];
+    freeBlocks1.push([startDate, pairs[0][0]]);
+    
+    for(var i = 1; i < pairs[0].length - 1; i+=2){
+        freeBlocks1.push([pairs[0][i], pairs[0][i+1]]);
+    }
+    var endOfDay = new Date();
+    endOfDay.setHours(17, 30, 0, 0);  
+    freeBlocks1.push([pairs[0][pairs[0].length], endOfDay]); 
+
+    var freeBlocks2 = [];
+    freeBlocks2.push([startDate, pairs[1][0]]);
+    
+    for(var i = 1; i < pairs[1].length - 1; i+=2){
+        freeBlocks2.push([pairs[1][i], pairs[1][i+1]]);
+    }  
+    freeBlocks2.push([pairs[1][pairs[1].length], endOfDay]); 
+
+    return [freeBlocks1, freeBlocks2, startDate];  
 }
 
 //looks for a suitable appointment block within the free blocks 
@@ -111,13 +101,12 @@ function findAppointment(user1, user2, freeBlocks1, freeBlocks2, startDate){
     newStart.setDate(startDate.getDate() + 1);
     newStart.setHours(8, 0, 0, 0);
     newPotential = lookForTimes(user1, user2, newStart); 
-    return(findAppointment(user1, user2, newPotential[0], newPotential[1])); 
+    return(findAppointment(user1, user2, newPotential[0], newPotential[1], newPotential[2])); 
 }
 
 //actually makes an appointment in gcal
 //returns a success message and the datetime of the new appointment or a failure message
 function makeAppointment(user1, user2, targetDate){
-    var googleAuthorization = getGoogleAuth();          //ADDRESS THIS
     var userArr = []; 
     userArr.push({email: user1}); 
     userArr.push({email: user2});
@@ -125,26 +114,18 @@ function makeAppointment(user1, user2, targetDate){
     var endDate = new Date(); 
     endDate.setTime(targetDate.getTime() +  900000); 
 
-    var event = {
-        'start': {
-          'dateTime': targetDate.toISOString().concat("-08:00")
-        },
-        'end': {
-          'dateTime': endDate.toISOString().concat("-08:00")
-        },
-        'attendees': userArr
-    };
-    calendar.events.insert({
-        auth: googleAuthorization,              //ADDRESS THIS
-        calendarId: 'primary',                  
-        resource: event,
-    }, function(err, response) {
-        if (err) {
-            return "Something went wrong :( Please try again!"
-        }
-        var res = response.items;
-        return "Your game was scheduled for "+targetDate+". Check it out: "+res.htmlLink; 
-      });
+    axios.post("http://1d59a544.ngrok.io/insert", {
+        summary: "Test summary",
+        start: targetDate.toISOString().concat("-08:00"),
+        end: endDate.toISOString().concat("-08:00"),
+        attendees: userArr
+    })
+    .then(res => console.log(res))
+    .catch(err => {
+        return "Something went wrong :( Please try again!"
+    });
+    var res = response.items;
+    return "Your game was scheduled for "+targetDate+". Check it out: "+res.htmlLink; 
 }
 
 const scheduleHelper = (freeBlocks1, freeBlocks2) => {
@@ -176,6 +157,7 @@ const noOverLapCheck =  (s1, e1, s2, e2) => {
     return (e1 > s1 && e1 < e2) || (e2 > s1 && e2 < e1)
 }
 
+<<<<<<< Updated upstream
 const stuff = {
     "kind": "calendar#freeBusy",
     "timeMin": "2018-07-27T16:00:00.000Z",
@@ -211,4 +193,42 @@ const stuff = {
      }
     }
    }
+=======
+const advanceBoth =
+// const stuff = {
+//     "kind": "calendar#freeBusy",
+//     "timeMin": "2018-07-27T16:00:00.000Z",
+//     "timeMax": "2018-07-28T01:30:00.000Z",
+//     "calendars": {
+//      "nmcginley@atlassian.com": {
+//       "busy": [
+//        {
+//         "start": "2018-07-27T10:00:00-07:00",
+//         "end": "2018-07-27T11:00:00-07:00"
+//        },
+//        {
+//         "start": "2018-07-27T12:30:00-07:00",
+//         "end": "2018-07-27T16:50:00-07:00"
+//        }
+//       ]
+//      },
+//      "cibarra@atlassian.com": {
+//       "busy": [
+//        {
+//         "start": "2018-07-27T10:00:00-07:00",
+//         "end": "2018-07-27T11:00:00-07:00"
+//        },
+//        {
+//         "start": "2018-07-27T11:15:00-07:00",
+//         "end": "2018-07-27T11:20:00-07:00"
+//        },
+//        {
+//         "start": "2018-07-27T12:30:00-07:00",
+//         "end": "2018-07-27T16:50:00-07:00"
+//        }
+//       ]
+//      }
+//     }
+//    }
+>>>>>>> Stashed changes
 
