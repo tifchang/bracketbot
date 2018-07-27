@@ -30,17 +30,17 @@ function lookForTimes(user1, user2, startDate) {
     endDate.setHours(17, 30, 0, 0); 
 
     axios.post("http://1d59a544.ngrok.io/freebusy", {
-        timeMin: startDate.toISOString.concat("-08:00"),
-        timeMax: endDate.toISOString.concat("-08:00"),
+        timeMin: startDate.toISOString().split(".")[0].concat("-08:00"),
+        timeMax: endDate.toISOString().split(".")[0].concat("-08:00"),
         items: [user1, user2]
     })
     .then(res => console.log(res))
     .catch(err => {
-            var newStart = new Date(); 
-            newStart.setDate(startDate.getDate() + 1);
-            newStart.setHours(8, 0, 0, 0); 
-            return lookForTimes(user1, user2, newStart);
-            //potential for infinite recursion lol
+        var newStart = new Date(); 
+        newStart.setDate(startDate.getDate() + 1);
+        newStart.setHours(8, 0, 0, 0); 
+        return lookForTimes(user1, user2, newStart);
+        //potential for infinite recursion lol
     });
 
     var blocks = res;
@@ -82,27 +82,18 @@ function lookForTimes(user1, user2, startDate) {
 //on success: returns the start datetime of the block that is free and at least 15 minutes long
 //on failure: that means there is no free block that's long enough, so it calls lookForTimes with tomorrow as the next start date 
 function findAppointment(user1, user2, freeBlocks1, freeBlocks2, startDate){
-    //REWRITE
-    
-    
-    
-    
-    //-------------------------------------------
-    freeBlocks.foreach((block) => {
-        var start = new Date(block.startTime);
-        var end = new Date(block.endTime); 
-        var timeDiff = Math.abs(end.getTime() - start.getTime());
-        var diffMins = Math.ceil(timeDiff / (60000));
-        if(diffMins >= 15){
-            return start;
-        }
-    });
-    //if there isn't a suitable block, look for openings starting tomorrow morning, then try to find a suitable block within those. 
-    var newStart = new Date(); 
-    newStart.setDate(startDate.getDate() + 1);
-    newStart.setHours(8, 0, 0, 0);
-    newPotential = lookForTimes(user1, user2, newStart); 
-    return(findAppointment(user1, user2, newPotential[0], newPotential[1], newPotential[2])); 
+    var newBlock = scheduleHelper(freeBlocks1, freeBlocks2);
+
+    if(!newBlock){
+        var newStart = new Date(); 
+        newStart.setDate(startDate.getDate() + 1);
+        newStart.setHours(8, 0, 0, 0);
+        newPotential = lookForTimes(user1, user2, newStart); 
+        return(findAppointment(user1, user2, newPotential[0], newPotential[1], newPotential[2])); 
+    }
+    else {
+        return newBlock; 
+    }
 }
 
 //actually makes an appointment in gcal
@@ -145,9 +136,9 @@ const scheduleHelper = (freeBlocks1, freeBlocks2) => {
             const timeDiff1 = milliSecondConvertMinutes(end1) - milliSecondConvertMinutes(start2);
             const timeDiff2 = milliSecondConvertMinutes(end2) - milliSecondConvertMinutes(start1);
             if ((timeDiff2) >= 15) {
-                return start1, start1 + 15;
+                return start1;
             } else if ((timeDiff1) >= 15) {
-                return start2, start2 + 15;
+                return start2;
             } else if ((timeDiff2) == 0 || timeDiff2 < 15) {
                 return scheduleHelper(freeBlocks1, freeBlocks2.splice(1));
             } else if ((timeDiff1) == 0 || timeDiff1 < 15) {
@@ -157,15 +148,13 @@ const scheduleHelper = (freeBlocks1, freeBlocks2) => {
     }
 }
 
-// const convertTimeToMinutes
-
 const noOverLapCheck =  (s1, e1, s2, e2) => {
     return (e1 > s1 && e1 < e2) || (e2 > s1 && e2 < e1)
 }
 
 const milliSecondConvertMinutes = (time) => {
-    let timeObj = Date(time);
-    let millis = timeObj.valueOf();
+    let timeObj = new Date(time);
+    let millis = timeObj.getTime();
     const NUM_MILLIS_IN_MINUTE = 60000
     return millis / NUM_MILLIS_IN_MINUTE;
 }
