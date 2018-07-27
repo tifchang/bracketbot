@@ -18,13 +18,9 @@ function appointmentHelper({user1, user2, summary}){
     var freeBlocks2 = potential[1];
     startDate = potential[2];               
     var targetDate = findAppointment(user1, user2, freeBlocks1, freeBlocks2, startDate); 
-<<<<<<< HEAD
     var target = new Date(targetDate);
     console.log("CONSOLE LOG: ", user1, user2, target, name);
     return makeAppointment(user1, user2, target, name); 
-=======
-    return makeAppointment(user1, user2, targetDate, summary); 
->>>>>>> 18a21bd9da41cd5691bdbd6a1de43f7d715a4a4d
 }
 
 //makes a freebusy query to google cal api
@@ -108,12 +104,8 @@ function findAppointment({user1, user2, freeBlocks1, freeBlocks2, startDate}){
 
 //actually makes an appointment in gcal
 //returns a success message and the datetime of the new appointment or a failure message
-<<<<<<< HEAD
 function makeAppointment(user1, user2, targetDate, summary ){
     console.log("DATETYPE: ", user1, user2, targetDate, summary)
-=======
-function makeAppointment({user1, user2, targetDate, summary}){
->>>>>>> 18a21bd9da41cd5691bdbd6a1de43f7d715a4a4d
     var userArr = []; 
     userArr.push(user1); 
     userArr.push(user2);
