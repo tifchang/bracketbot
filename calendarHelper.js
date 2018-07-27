@@ -2,8 +2,27 @@ var google = require('googleapis');
 const {OAuth2Client} = require('google-auth-library');
 const BASE_URL = 'http://localhost:5000';
 var axios = require('axios');
-
+var counter = 0; 
 //actually look for gaps and add to calendar 
+
+function tempAppointmentHelper({user1, user2, summary}){
+    var time1 = new Date("2018-07-30T08:30:00");
+    var time2 = new Date("2018-07-30T12:00:00");
+    var time3 = new Date("2018-07-31T08:30:00");
+
+    if (counter === 0) {
+        counter++; 
+        return makeAppointment(user1, user2, time1, summary); 
+    }
+    if (counter === 1) {
+        counter++; 
+        return makeAppointment(user1, user2, time2, summary); 
+    }
+    if (counter === 2) {
+        counter++; 
+        return makeAppointment(user1, user2, time3, summary); 
+    }
+}
 
 function appointmentHelper({user1, user2, summary}){
     //start looking for openings starting at the current time, or tomorrow morning if it's after 5:15
@@ -122,10 +141,10 @@ function makeAppointment(user1, user2, targetDate, summary ){
     .then(res =>   {
         console.log(res)
         var r = res.items;
-        return "Your game was scheduled for "+targetDate+". Check it out: "+r.htmlLink; 
+        return r.htmlLink; 
     })
     .catch(err => {
-        return "Something went wrong :( Please try again!"
+        return ""
     });
     
 }
