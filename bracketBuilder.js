@@ -30,7 +30,7 @@ class BracketBuilder {
 		return axios.post(this.resolveURL(), { 
 			name,
 			description,
-      start_at: startTime,
+      start_at: new Date(),
       url: `ATLASSIAN_${name.replace(/ /g,'')}`,
       signup_cap: cap,
 			api_key: this.API_URL
@@ -128,6 +128,4 @@ const bb = new BracketBuilder();
 
 // bb.indexParticipants({id: "4852317"}).then(rs)
 // bb.addSingleParticipant({tournamentId: "4851646", name:"tiff3"}).then(res => console.log(res));
-
-
 module.exports = BracketBuilder;
