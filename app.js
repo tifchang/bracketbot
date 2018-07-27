@@ -3,6 +3,7 @@
 
 var express = require('express');
 var bodyParser = require('body-parser');
+var Sequalize = require('sequelize');
 var mongoose = require('mongoose');
 var google = require('googleapis');
 var googleAuth = require('google-auth-library');
@@ -14,6 +15,34 @@ var makeAppointment = require('./calendarHelper');
 // var OAuth2 = google.auth.OAuth2;
 
 const bb = new BracketBuilder();
+
+const db = new Sequalize({
+    dialect: 'sqlite',
+    storage: './services/test.sqlite'
+})
+
+const User = db.define('user', {
+    name: Sequalize.STRING,
+    real_name: Sequalize.STRING,
+    display_name: Sequalize.STRING,
+    email: Sequalize.STRING,
+    pid: Sequalize.STRING
+})
+
+// db.sync().then(() => {
+//     User.create({
+//         name: "Cesar Francisco Ibarra",
+//         real_name: "Wtf this is my real name",
+//         display_name: "Cesar Weezer",
+//         email: "cesar@stanfurd.edu",
+//         pid: "696969"
+//     })
+// })
+
+User.findOne({where: {pid: "696969"}})
+    .then(u => {
+        console.log(u);
+    })
 
 
 // express server setup
@@ -217,8 +246,6 @@ function addSingleUser(slackId, name, tournamentId) {
                 } else {
                     bot.postMessage('general', ":heavy_plus_sign: :gentlyplz: <@" + slackId + "> has been successfully added to " + tournamentId + " bracket.");
                 }
-            
-                
             })
             
         })

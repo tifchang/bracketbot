@@ -157,8 +157,6 @@ const scheduleHelper = (freeBlocks1, freeBlocks2) => {
     }
 }
 
-const convertTimeToMinutes
-
 const noOverLapCheck =  (s1, e1, s2, e2) => {
     return (e1 > s1 && e1 < e2) || (e2 > s1 && e2 < e1)
 }
@@ -205,8 +203,5 @@ const milliSecondConvertMinutes = (time) => {
 //      }
 //     }
 //    }
-<<<<<<< HEAD
 
 module.exports = makeAppointment;
-=======
->>>>>>> 81d20516021a83b0e24598148701e1d3aac6a037
