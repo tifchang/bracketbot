@@ -14,7 +14,7 @@ def events_insert():
    data = json.loads(request.data)
    summary, start, end = data['summary'], data['start'], data['end']
    attendees = [{'email': email} for email in data['attendees']]
-   body = {'summary': data['summary'], 'start': {'dateTime': start}, 'end': {'dateTime': end}, 'attendees': attendees}
+   body = {'summary': data['summary'], 'start': {'dateTime': start}, 'end': {'dateTime': end}, 'attendees': attendees, 'start.timeZone': 'America/Los_Angeles', 'end.timeZone': 'America/Los_Angeles'}
 
    response = calendar.events_insert(calendarId='primary', sendNotifications=True, body=body)
    return jsonify(response), 200
