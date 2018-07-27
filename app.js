@@ -40,11 +40,12 @@ bot.on('start', () => {
             real_name: u.real_name || '',
             display_name: u.display_name || '',
             email: u.profile.email || '',
+            tournaments: []
         }
     });
     bot.postMessageToChannel(
         'general', 
-        "Hello, is it _*Lil BB*_ you are looking for? :gentlyplz:", 
+        ":wave: Hello, is it _*Lil BB*_ you are looking for? :gentlyplz:", 
         params);
 })
 
@@ -107,7 +108,6 @@ bot.on('message', (data) => {
     else if (msgArray[1].toLowerCase() === "players") {
         var bracketId = msgArray[2];
         bb.indexParticipants({id: bracketId}).then( players => {
-            console.log(players);
             var playerString = "";
             for (i = 0; i < players.length; i++) {
                 if (i !== players.length - 1) {
@@ -118,15 +118,12 @@ bot.on('message', (data) => {
                     playerString += "and " + players[i].name;
                 }
             }
-            console.log("HELLO: ", playerString);
             bb.fetchBracketInfo({ id:bracketId }).then(data => {
-                console.log(data)
                 bot.postMessageToChannel(
                     'general',
                     ":busts_in_silhouette: Players in *" + data.name + "* are: " + playerString
                 )
             })
-            
         });
     }
 
@@ -157,20 +154,9 @@ function matchNotification(name, oAuthURL, opponent, date) {
     )
 }
 
-// Ask for Google authentication 
-function oAuthNotification(name, oAuthURL) {
-    bot.postMessageToUser(
-        name,
-        ":warning: Before we can start any matches, please allow access with your Google Calendar here" + 
-        oAuthURL + " :warning:"
-    )
-};
-
-
 // Message helper functions
 function createTournament(name, cap, slackId) {
     bb.createBracket({ name, cap }).then(res => {
-        console.log("CREATE RES: ", res)
         if (res.length !== 0) {
             bot.postMessageToChannel(
                 'general', 
@@ -187,6 +173,7 @@ function createTournament(name, cap, slackId) {
         addSingleUser(slackId, name, res);
     })
 }
+
 // Congratulatory end of tournament message
 function endTournament(id) {
     // TODO: function to get winner 
@@ -195,18 +182,31 @@ function endTournament(id) {
         ":trophy: :first_place_medal: Congratulations to " + winner + " on DEFEATING _EVERYONE_ in " + bracketName + " :first_place_medal: :trophy:"
     )
 }
-
+// Add single user (also used in the create stage)
 function addSingleUser(slackId, name, tournamentId) {
     bb.addSingleParticipant({ tournamentId, name: all_users[slackId].real_name })
         .then( ({ id }) => {
-            all_users[slackId].pid = id;
-            bot.postMessage('general', ":heavy_plus_sign: :gentlyplz: <@" + slackId + "> has been successfully added to " + tournamentId + " bracket.")
+            all_users[slackId].tournaments.push({
+                pid: id,
+                tid: tournamentId,
+            });
+            bb.fetchBracketInfo({id: tournamentId}).then(resp => {
+                if (resp.cap <= resp.count) {
+                    bot.postMessage('general', ":heavy_plus_sign: :gentlyplz: <@" + slackId + "> has been successfully added to " + tournamentId + " bracket. The cap has been reached and the games will now begin!");
+                    bb.startTournament(tournamentId);
+                } else {
+                    bot.postMessage('general', ":heavy_plus_sign: :gentlyplz: <@" + slackId + "> has been successfully added to " + tournamentId + " bracket.");
+                }
+            
+                
+            })
+            
         })
         .catch(_ => {
             bot.postMessage('general', 'Oops! Something went wrong here. Try again!');
         })       
 }
-
+// Updating match when user inputs score and winner
 function updateTournament(tournamentId, matchId, winnerId) {
     bb.updateMatch({ matchId, tournamentId, winnerId }).then(res => {
         console.log("UPDATE: " + res);
@@ -218,8 +218,6 @@ function updateTournament(tournamentId, matchId, winnerId) {
     
 }
 
-
-// TODO: require in google cal functions or anything cal related
 
 // Use body parser middleware
 app.use(bodyParser.urlencoded({ extended: true }));

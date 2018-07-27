@@ -68,7 +68,9 @@ class BracketBuilder {
       params: { api_key: this.API_URL }
     })
     .then(res => res.data)
-    .then(({tournament}) => ({id:tournament.id, name:tournament.name}))
+    .then(({tournament}) => {
+      ({id:tournament.id, name:tournament.name, cap:signup_cap, count:participants_count})
+    })
     .catch(err => err);
   }
 
@@ -162,7 +164,7 @@ class BracketBuilder {
       {api_key: this.API_URL}, {headers: {'Content-Type': 'application/json'}
     })
     .then(res => {
-      console.log(res);
+      // console.log(res);
       return res;
     })
     .catch(err => err);
@@ -176,7 +178,7 @@ class BracketBuilder {
     return axios.put(endpoints.UPDATEMATCH({tournamentId, matchId}),
       {api_key: this.API_URL, winner_id: winnerId}, { headers: {'Content-Type': 'application/json'}
     })
-    .then(res => res.status)
+    .then(res => res)
     .catch(err => err)
   }
 
@@ -189,5 +191,5 @@ module.exports = BracketBuilder;
 
 const bb = new BracketBuilder();
 
-// bb.startTournament({tournamentId: "4852891"}).then(res => console.log(res)).catch(err => console.log(err));
-bb.updateMatch({ matchId: "128720926", tournamentId: "4852891", winnerId: "79012607"}).then(res => console.log(res));
+// bb.startTournament({tournamentId: "4853390"}).then(res => console.log(res)).catch(err => console.log(err));
+// bb.updateMatch({ matchId: "128720926", tournamentId: "4852891", winnerId: "79012666"}).then(res => console.log("WHT", res));
