@@ -79,7 +79,7 @@ function lookForTimes(user1, user2, startDate) {
 //params: the two participants' calendars and the list of freeBlock objects which contain the start and end times as dates
 //on success: returns the start datetime of the block that is free and at least 15 minutes long
 //on failure: that means there is no free block that's long enough, so it calls lookForTimes with tomorrow as the next start date 
-function findAppointment(user1, user2, freeBlocks, startDate){
+function findAppointment(user1, user2, freeBlocks, startDate) {
     //REWRITE
     
     freeBlocks.foreach((block) => {
