@@ -57,6 +57,7 @@ const bot = new SlackBot({
 
 // Object that stores mapping of uesrs
 var all_users = {};
+var all_tourns = {};
 
 bot.on('start', () => {
     const params = {
@@ -77,6 +78,8 @@ bot.on('start', () => {
         'general', 
         ":wave: Hello, is it _*Lil BB*_ you are looking for? :gentlyplz:", 
         params);
+
+    // TODO: NODE CLIENT
 })
 
 // Error handler
@@ -110,6 +113,7 @@ bot.on('message', (data) => {
         addSingleUser(slackId, name, bracketId);
     }
 
+    // CAL TESTER
     else if (msgArray[1].toLowerCase() === "cal") {
         var u1id = msgArray[2].substring(2, msgArray[2].indexOf(">"));
         var u2id = msgArray[3].substring(2, msgArray[3].indexOf(">"));
@@ -148,18 +152,20 @@ bot.on('message', (data) => {
     // List participants in tournament
     else if (msgArray[1].toLowerCase() === "players") {
         var bracketId = msgArray[2];
+        all_tourns[bracketId] = {};
         bb.indexParticipants({id: bracketId}).then( players => { 
             var playerString = "";
             for (i = 0; i < players.length; i++) {
+                all_tourns[bracketId][players[i].name] = players[i].id;
                 if (i !== players.length - 1) {
-                    playerString += (players[i].name + ", ");
+                    playerString += (players[i].name + " (" +  players[i].id + "), ");
                 } else if (players.length === 1) {
-                    playerString = players[i].name;
+                    playerString = players[i].name + " (" +  players[i].id + ")"
                 } else {
-                    playerString += "and " + players[i].name;
+                    playerString += "and " + players[i].name + " (" +  players[i].id + ")";
                 }
             }
-            console.log("bracketId: " + bracketId);
+            console.log(all_tourns[bracketId]);
             bb.fetchBracketInfo({ id:bracketId }).then(data => {
                 console.log("DATA: ", data)
                 bot.postMessageToChannel(
@@ -255,17 +261,19 @@ function addSingleUser(slackId, name, tournamentId) {
 }
 // Updating match when user inputs score and winner
 function updateTournament(tournamentId, winnerId) {
-    var winnerId = "79022002";
+    var winnerId = "79026088";
     bb.getMatch({tournamentId, winnerId})
         .then(matches => {
             let match;
+            console.log("match1: ", match);
             matches.forEach(m => {
                 if (winnerId === `${m.player1}` || winnerId === `${m.player2}`) {
+                    console.log("I FOUND A MATCH.", m)
                     match = m;
                     return;
                 }
             })
-
+            console.log("match2: ", match);
             let whichPlayerWon;
             if (winnerId === match.player1) {
                 whichPlayerWon = "player1";
