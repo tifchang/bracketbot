@@ -94,7 +94,6 @@ class BracketBuilder {
    * @return {Promise} statuscode 
    */
   addSingleParticipant({ tournamentId, name }) {
-    console.log(endpoints.PARTICIPANT({tournamentId}))
     return axios.post(endpoints.PARTICIPANT({tournamentId}), 
       { api_key: this.API_URL, name: name }, {headers: { 'Content-Type': 'application/json'}
     })
@@ -116,16 +115,42 @@ class BracketBuilder {
     return Promise.all(resolver);
   }
 
+  /**
+   * Get match
+   * @param {string} tournamentId 
+   * @param {string} uid userId
+   * @returns {array} of objs
+   */
+  getMatch({ tournamentId, participantId }) {
+    const matchesForTournament = axios.get(endpoints.GETMATCH({tournamentId}), 
+      {api_key: this.API_URL, participant_id: participantId}, {headers: {'Content-Type': 'application/json'}
+    })
+    .then(res => console.log(res))
+    .catch(err => err);
+    return matchesForTournament.map(({match}) => {
+      return { 
+        tournamentId: match.tournament_id, 
+        matchId: match.match_id, 
+        player1: match.player1_id,
+        player2: match.player2_id
+      }
+    })
+  }
+
+  /**
+   * 
+   */
+  updateMatch({ matchId, tournamentId, winnerId}) {
+    return axios.put(endpoints.UPDATEMATCH({tournamentId, matchId}),
+      {api_key: this.API_URL, winner_id: winnerId}, { headers: {'Content-Type': 'application/json'}
+    })
+    .then(res => res.status)
+    .catch(err => err)
+  }
+
   resolveURL(param="") {
     return param === "" ? `${endpoints.TOURNAMENT}.json` : `${endpoints.TOURNAMENT}/${param}.json`
   }
 }
 
-const bb = new BracketBuilder();
-// bb.deleteBracket({id: "4851658"}).then(status => console.log(status)).catch(err => console.log(err));
-// bb.createBracket({name: "Kiki DO YOU LOVE ME", startTime: new Date(), description: "ayo", cap: 10}).then(status => console.log(status)).catch(err => console.log(err));
-// bb.fetchAllBracketInfo().then(t => console.log(t));
-
-// bb.indexParticipants({id: "4852317"}).then(rs)
-// bb.addSingleParticipant({tournamentId: "4851646", name:"tiff3"}).then(res => console.log(res));
 module.exports = BracketBuilder;
